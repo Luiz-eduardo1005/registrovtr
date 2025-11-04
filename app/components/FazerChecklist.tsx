@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import TabelaAvarias from './TabelaAvarias'
 
@@ -32,7 +32,61 @@ const ITENS_GERAIS = [
 const CODIGOS_SPIN = ['1348', '1369', '1399']
 const CODIGOS_S10 = ['1012', '1028']
 
-export default function FazerChecklist() {
+const OPCOES_COMBUSTIVEL = [
+  { value: 'E', label: 'E (Reserva)' },
+  { value: '1/4', label: '1/4' },
+  { value: '1/2', label: '1/2' },
+  { value: '3/4', label: '3/4' },
+  { value: 'F', label: 'F (Cheio)' }
+]
+
+// Função para converter número para opção de combustível
+const numeroParaOpcao = (numero: number): string => {
+  if (numero === 0) return 'E'
+  if (numero <= 25) return '1/4'
+  if (numero <= 50) return '1/2'
+  if (numero <= 75) return '3/4'
+  return 'F'
+}
+
+// Função para converter opção de combustível para número
+const opcaoParaNumero = (opcao: string): number => {
+  switch (opcao) {
+    case 'E': return 0
+    case '1/4': return 25
+    case '1/2': return 50
+    case '3/4': return 75
+    case 'F': return 100
+    default: return 0
+  }
+}
+
+interface ChecklistRecord {
+  id: string
+  data: string
+  prefixed: 'spin' | 's10'
+  codigo_viatura: string
+  servico: 'Ordinario' | 'SEG'
+  turno: 'Primeiro' | 'Segundo'
+  km_inicial: number
+  km_final: number
+  abastecimento: number
+  combustivel_inicial: number
+  combustivel_final: number
+  avarias: Record<string, { tipo: string; observacao: string }>
+  observacoes: string
+  ci: string
+  opm: string
+  nome: string
+}
+
+interface FazerChecklistProps {
+  editRecord?: ChecklistRecord | null
+  onCancel?: () => void
+  onSuccess?: () => void
+}
+
+export default function FazerChecklist({ editRecord, onCancel, onSuccess }: FazerChecklistProps) {
   const [data, setData] = useState(new Date().toISOString().split('T')[0])
   const [prefixed, setPrefixed] = useState<'spin' | 's10' | ''>('')
   const [codigoViatura, setCodigoViatura] = useState('')
@@ -41,7 +95,6 @@ export default function FazerChecklist() {
   const [kmInicial, setKmInicial] = useState('')
   const [kmFinal, setKmFinal] = useState('')
   const [abastecimento, setAbastecimento] = useState('')
-  const [motorista, setMotorista] = useState<'CMT' | 'PTR' | ''>('')
   const [combustivelInicial, setCombustivelInicial] = useState('')
   const [combustivelFinal, setCombustivelFinal] = useState('')
   const [avarias, setAvarias] = useState<Record<string, { tipo: string; observacao: string }>>({})
@@ -53,7 +106,41 @@ export default function FazerChecklist() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  // Preencher formulário quando estiver editando
+  useEffect(() => {
+    if (editRecord) {
+      setData(editRecord.data)
+      setPrefixed(editRecord.prefixed as 'spin' | 's10')
+      setCodigoViatura(editRecord.codigo_viatura)
+      setServico(editRecord.servico as 'Ordinario' | 'SEG')
+      setTurno(editRecord.turno as 'Primeiro' | 'Segundo')
+      setKmInicial(editRecord.km_inicial.toString())
+      setKmFinal(editRecord.km_final.toString())
+      setAbastecimento(editRecord.abastecimento.toString())
+      setCombustivelInicial(numeroParaOpcao(editRecord.combustivel_inicial))
+      setCombustivelFinal(numeroParaOpcao(editRecord.combustivel_final))
+      setAvarias(editRecord.avarias || {})
+      setObservacoes(editRecord.observacoes || '')
+      setCi(editRecord.ci)
+      setOpm(editRecord.opm)
+      setNome(editRecord.nome || '')
+    }
+  }, [editRecord])
+
+  // Limpar código da viatura quando o prefixo mudar
+  const handlePrefixedChange = (newPrefixed: 'spin' | 's10') => {
+    const codigosValidos = newPrefixed === 'spin' ? CODIGOS_SPIN : CODIGOS_S10
+    // Se o código atual não é válido para o novo prefixo, limpar
+    if (codigoViatura && !codigosValidos.includes(codigoViatura)) {
+      setCodigoViatura('')
+    }
+    setPrefixed(newPrefixed)
+  }
+
   const codigosDisponiveis = prefixed === 'spin' ? CODIGOS_SPIN : prefixed === 's10' ? CODIGOS_S10 : []
+
+  // Determina se os campos devem estar habilitados (quando turno está selecionado)
+  const camposHabilitados = !!turno
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,50 +149,66 @@ export default function FazerChecklist() {
     setSuccess(false)
 
     try {
-      const { data: insertData, error: insertError } = await supabase
-        .from('checklists')
-        .insert({
-          data,
-          prefixed,
-          codigo_viatura: codigoViatura,
-          servico,
-          turno,
-          km_inicial: parseInt(kmInicial) || 0,
-          km_final: parseInt(kmFinal) || 0,
-          abastecimento: parseFloat(abastecimento) || 0,
-          motorista,
-          combustivel_inicial: parseFloat(combustivelInicial) || 0,
-          combustivel_final: parseFloat(combustivelFinal) || 0,
-          avarias: avarias,
-          observacoes,
-          ci,
-          opm,
-          nome
-        })
+      const checklistData = {
+        data,
+        prefixed,
+        codigo_viatura: codigoViatura,
+        servico,
+        turno,
+        km_inicial: parseInt(kmInicial) || 0,
+        km_final: parseInt(kmFinal) || 0,
+        abastecimento: parseFloat(abastecimento) || 0,
+        combustivel_inicial: opcaoParaNumero(combustivelInicial),
+        combustivel_final: opcaoParaNumero(combustivelFinal),
+        avarias: avarias,
+        observacoes,
+        ci,
+        opm,
+        nome
+      }
 
-      if (insertError) throw insertError
+      if (editRecord) {
+        // Atualizar registro existente
+        const { error: updateError } = await supabase
+          .from('checklists')
+          .update(checklistData)
+          .eq('id', editRecord.id)
+
+        if (updateError) throw updateError
+      } else {
+        // Criar novo registro
+        const { error: insertError } = await supabase
+          .from('checklists')
+          .insert(checklistData)
+
+        if (insertError) throw insertError
+      }
 
       setSuccess(true)
       
-      // Limpar formulário
-      setData(new Date().toISOString().split('T')[0])
-      setPrefixed('')
-      setCodigoViatura('')
-      setServico('')
-      setTurno('')
-      setKmInicial('')
-      setKmFinal('')
-      setAbastecimento('')
-      setMotorista('')
-      setCombustivelInicial('')
-      setCombustivelFinal('')
-      setAvarias({})
-      setObservacoes('')
-      setCi('')
-      setOpm('')
-      setNome('')
+      // Limpar formulário apenas se não estiver editando
+      if (!editRecord) {
+        setData(new Date().toISOString().split('T')[0])
+        setPrefixed('')
+        setCodigoViatura('')
+        setServico('')
+        setTurno('')
+        setKmInicial('')
+        setKmFinal('')
+        setAbastecimento('')
+        setCombustivelInicial('')
+        setCombustivelFinal('')
+        setAvarias({})
+        setObservacoes('')
+        setCi('')
+        setOpm('')
+        setNome('')
+      }
 
-      setTimeout(() => setSuccess(false), 5000)
+      setTimeout(() => {
+        setSuccess(false)
+        if (onSuccess) onSuccess()
+      }, 2000)
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar checklist')
     } finally {
@@ -115,10 +218,22 @@ export default function FazerChecklist() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>Fazer Checklist</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2>{editRecord ? 'Editar Checklist' : 'Fazer Checklist'}</h2>
+        {editRecord && onCancel && (
+          <button
+            type="button"
+            className="nav-button"
+            onClick={onCancel}
+            style={{ padding: '8px 16px', fontSize: '0.9rem', background: '#666' }}
+          >
+            Cancelar
+          </button>
+        )}
+      </div>
 
       {error && <div className="error">{error}</div>}
-      {success && <div className="success">Checklist registrado com sucesso!</div>}
+      {success && <div className="success">{editRecord ? 'Checklist atualizado com sucesso!' : 'Checklist registrado com sucesso!'}</div>}
 
       {/* Brazões */}
       <div className="form-section">
@@ -154,43 +269,27 @@ export default function FazerChecklist() {
       {/* Prefixo */}
       <div className="form-section">
         <div className="form-group">
-          <label>Prefixo:</label>
+          <label>Modelo da Viatura:</label>
           <div className="radio-group">
-            <div
-              className={`radio-option ${prefixed === 'spin' ? 'selected' : ''}`}
-              onClick={() => {
-                setPrefixed('spin')
-                setCodigoViatura('')
-              }}
-            >
+            <div className={`radio-option ${prefixed === 'spin' ? 'selected' : ''}`}>
               <input
                 type="radio"
                 name="prefixed"
                 value="spin"
                 checked={prefixed === 'spin'}
-                onChange={() => {
-                  setPrefixed('spin')
-                  setCodigoViatura('')
-                }}
+                onChange={(e) => handlePrefixedChange(e.target.value as 'spin')}
+                required
               />
               <label>SPIN</label>
             </div>
-            <div
-              className={`radio-option ${prefixed === 's10' ? 'selected' : ''}`}
-              onClick={() => {
-                setPrefixed('s10')
-                setCodigoViatura('')
-              }}
-            >
+            <div className={`radio-option ${prefixed === 's10' ? 'selected' : ''}`}>
               <input
                 type="radio"
                 name="prefixed"
                 value="s10"
                 checked={prefixed === 's10'}
-                onChange={() => {
-                  setPrefixed('s10')
-                  setCodigoViatura('')
-                }}
+                onChange={(e) => handlePrefixedChange(e.target.value as 's10')}
+                required
               />
               <label>S10</label>
             </div>
@@ -199,103 +298,93 @@ export default function FazerChecklist() {
       </div>
 
       {/* Código Viatura */}
-      {prefixed && (
-        <div className="form-section">
-          <div className="form-group">
-            <label>Código da Viatura:</label>
-            <select
-              value={codigoViatura}
-              onChange={(e) => setCodigoViatura(e.target.value)}
-              required
-            >
-              <option value="">Selecione o código</option>
-              {codigosDisponiveis.map((codigo) => (
-                <option key={codigo} value={codigo}>
-                  {codigo}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="form-section">
+        <div className="form-group">
+          <label>Prefixo:</label>
+          <select
+            value={codigoViatura}
+            onChange={(e) => setCodigoViatura(e.target.value)}
+            required
+            disabled={!prefixed}
+          >
+            <option value="">Selecione o código</option>
+            {codigosDisponiveis.map((codigo) => (
+              <option key={codigo} value={codigo}>
+                {codigo}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
+      </div>
 
       {/* Serviço */}
-      {codigoViatura && (
-        <div className="form-section">
-          <div className="form-group">
-            <label>Serviço:</label>
-            <div className="radio-group">
-              <div
-                className={`radio-option ${servico === 'Ordinario' ? 'selected' : ''}`}
-                onClick={() => setServico('Ordinario')}
-              >
-                <input
-                  type="radio"
-                  name="servico"
-                  value="Ordinario"
-                  checked={servico === 'Ordinario'}
-                  onChange={() => setServico('Ordinario')}
-                />
-                <label>Ordinário</label>
-              </div>
-              <div
-                className={`radio-option ${servico === 'SEG' ? 'selected' : ''}`}
-                onClick={() => setServico('SEG')}
-              >
-                <input
-                  type="radio"
-                  name="servico"
-                  value="SEG"
-                  checked={servico === 'SEG'}
-                  onChange={() => setServico('SEG')}
-                />
-                <label>SEG</label>
-              </div>
+      <div className="form-section">
+        <div className="form-group">
+          <label>Serviço:</label>
+          <div className="radio-group">
+            <div className={`radio-option ${servico === 'Ordinario' ? 'selected' : ''}`}>
+              <input
+                type="radio"
+                name="servico"
+                value="Ordinario"
+                checked={servico === 'Ordinario'}
+                onChange={(e) => setServico(e.target.value as 'Ordinario')}
+                required
+                disabled={!camposHabilitados}
+              />
+              <label>Ordinário</label>
+            </div>
+            <div className={`radio-option ${servico === 'SEG' ? 'selected' : ''}`}>
+              <input
+                type="radio"
+                name="servico"
+                value="SEG"
+                checked={servico === 'SEG'}
+                onChange={(e) => setServico(e.target.value as 'SEG')}
+                required
+                disabled={!camposHabilitados}
+              />
+              <label>SEG</label>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Turno */}
-      {servico && (
-        <div className="form-section">
-          <div className="form-group">
-            <label>Turno:</label>
-            <div className="radio-group">
-              <div
-                className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`}
-                onClick={() => setTurno('Primeiro')}
-              >
-                <input
-                  type="radio"
-                  name="turno"
-                  value="Primeiro"
-                  checked={turno === 'Primeiro'}
-                  onChange={() => setTurno('Primeiro')}
-                />
-                <label>Primeiro Turno</label>
-              </div>
-              <div
-                className={`radio-option ${turno === 'Segundo' ? 'selected' : ''}`}
-                onClick={() => setTurno('Segundo')}
-              >
-                <input
-                  type="radio"
-                  name="turno"
-                  value="Segundo"
-                  checked={turno === 'Segundo'}
-                  onChange={() => setTurno('Segundo')}
-                />
-                <label>Segundo Turno</label>
-              </div>
+      <div className="form-section">
+        <div className="form-group">
+          <label>Turno:</label>
+          <div className="radio-group">
+            <div className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`}>
+              <input
+                type="radio"
+                name="turno"
+                value="Primeiro"
+                checked={turno === 'Primeiro'}
+                onChange={(e) => setTurno(e.target.value as 'Primeiro')}
+                required
+              />
+              <label>Primeiro Turno</label>
+            </div>
+            <div className={`radio-option ${turno === 'Segundo' ? 'selected' : ''}`}>
+              <input
+                type="radio"
+                name="turno"
+                value="Segundo"
+                checked={turno === 'Segundo'}
+                onChange={(e) => setTurno(e.target.value as 'Segundo')}
+                required
+              />
+              <label>Segundo Turno</label>
             </div>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* KM e Abastecimento */}
-      {turno && (
+      {/* KM */}
+      {camposHabilitados && (
         <div className="form-section">
+          <h2>KM</h2>
           <div className="form-row">
             <div className="form-group">
               <label>KM Inicial:</label>
@@ -315,91 +404,65 @@ export default function FazerChecklist() {
                 required
               />
             </div>
-            <div className="form-group">
-              <label>Abastecimento (L):</label>
-              <input
-                type="number"
-                step="0.01"
-                value={abastecimento}
-                onChange={(e) => setAbastecimento(e.target.value)}
-                required
-              />
-            </div>
           </div>
         </div>
       )}
 
-      {/* Motorista */}
-      {abastecimento && (
+      {/* Combustível e Abastecimento */}
+      {camposHabilitados && (
         <div className="form-section">
+          <h2>Combustível e Abastecimento</h2>
           <div className="form-group">
-            <label>Motorista:</label>
+            <label>Combustível Inicial:</label>
             <div className="radio-group">
-              <div
-                className={`radio-option ${motorista === 'CMT' ? 'selected' : ''}`}
-                onClick={() => setMotorista('CMT')}
-              >
-                <input
-                  type="radio"
-                  name="motorista"
-                  value="CMT"
-                  checked={motorista === 'CMT'}
-                  onChange={() => setMotorista('CMT')}
-                />
-                <label>CMT</label>
-              </div>
-              <div
-                className={`radio-option ${motorista === 'PTR' ? 'selected' : ''}`}
-                onClick={() => setMotorista('PTR')}
-              >
-                <input
-                  type="radio"
-                  name="motorista"
-                  value="PTR"
-                  checked={motorista === 'PTR'}
-                  onChange={() => setMotorista('PTR')}
-                />
-                <label>PTR</label>
-              </div>
+              {OPCOES_COMBUSTIVEL.map((opcao) => (
+                <div key={opcao.value} className={`radio-option ${combustivelInicial === opcao.value ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="combustivelInicial"
+                    value={opcao.value}
+                    checked={combustivelInicial === opcao.value}
+                    onChange={(e) => setCombustivelInicial(e.target.value)}
+                    required
+                  />
+                  <label>{opcao.label}</label>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Combustível */}
-      {motorista && (
-        <div className="form-section">
-          <div className="form-row">
-            <div className="form-group">
-              <label>Combustível Inicial (%):</label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                value={combustivelInicial}
-                onChange={(e) => setCombustivelInicial(e.target.value)}
-                required
-              />
+          <div className="form-group">
+            <label>Combustível Final:</label>
+            <div className="radio-group">
+              {OPCOES_COMBUSTIVEL.map((opcao) => (
+                <div key={opcao.value} className={`radio-option ${combustivelFinal === opcao.value ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="combustivelFinal"
+                    value={opcao.value}
+                    checked={combustivelFinal === opcao.value}
+                    onChange={(e) => setCombustivelFinal(e.target.value)}
+                    required
+                  />
+                  <label>{opcao.label}</label>
+                </div>
+              ))}
             </div>
-            <div className="form-group">
-              <label>Combustível Final (%):</label>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="100"
-                value={combustivelFinal}
-                onChange={(e) => setCombustivelFinal(e.target.value)}
-                required
-              />
-            </div>
+          </div>
+          <div className="form-group">
+            <label>Abastecimento (L):</label>
+            <input
+              type="number"
+              step="0.01"
+              value={abastecimento}
+              onChange={(e) => setAbastecimento(e.target.value)}
+              required
+            />
           </div>
         </div>
       )}
 
       {/* Tabela de Avarias */}
-      {combustivelFinal && (
+      {camposHabilitados && (
         <div className="form-section">
           <h2>Tabela de Avarias</h2>
           <TabelaAvarias
@@ -412,7 +475,7 @@ export default function FazerChecklist() {
       )}
 
       {/* Observações */}
-      {combustivelFinal && (
+      {camposHabilitados && (
         <div className="form-section">
           <div className="form-group">
             <label>Observações:</label>
@@ -420,14 +483,14 @@ export default function FazerChecklist() {
               value={observacoes}
               onChange={(e) => setObservacoes(e.target.value)}
               rows={5}
-              placeholder="Digite suas observações..."
+              placeholder="Digite observações adicionais..."
             />
           </div>
         </div>
       )}
 
       {/* CI e OPM */}
-      {combustivelFinal && (
+      {camposHabilitados && (
         <div className="form-section">
           <div className="form-row">
             <div className="form-group">
@@ -453,10 +516,10 @@ export default function FazerChecklist() {
       )}
 
       {/* Nome */}
-      {ci && opm && (
+      {camposHabilitados && (
         <div className="form-section">
           <div className="form-group">
-            <label>Nome da Pessoa que está fazendo o registro:</label>
+            <label>Motorista que está fazendo o registro:</label>
             <input
               type="text"
               value={nome}
@@ -469,9 +532,9 @@ export default function FazerChecklist() {
       )}
 
       {/* Botão Submit */}
-      {ci && opm && nome && (
+      {camposHabilitados && (
         <button type="submit" className="submit-button" disabled={loading}>
-          {loading ? 'Registrando...' : 'Registrar Checklist'}
+          {loading ? (editRecord ? 'Atualizando...' : 'Registrando...') : (editRecord ? 'Atualizar Checklist' : 'Registrar Checklist')}
         </button>
       )}
     </form>

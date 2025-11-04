@@ -27,17 +27,25 @@ const ITENS_GERAIS = [
   'Máq. Fotográfica'
 ]
 
+// Função para converter número para opção de combustível
+const numeroParaOpcao = (numero: number): string => {
+  if (numero === 0) return 'E (Reserva)'
+  if (numero <= 25) return '1/4'
+  if (numero <= 50) return '1/2'
+  if (numero <= 75) return '3/4'
+  return 'F (Cheio)'
+}
+
 interface ChecklistRecord {
   id: string
   data: string
-  prefixed: string
+  prefixed: 'spin' | 's10'
   codigo_viatura: string
-  servico: string
-  turno: string
+  servico: 'Ordinario' | 'SEG'
+  turno: 'Primeiro' | 'Segundo'
   km_inicial: number
   km_final: number
   abastecimento: number
-  motorista: string
   combustivel_inicial: number
   combustivel_final: number
   avarias: Record<string, { tipo: string; observacao: string }>
@@ -51,20 +59,35 @@ interface ChecklistRecord {
 interface VerDetalhesChecklistProps {
   record: ChecklistRecord
   onClose: () => void
+  onEdit?: (record: ChecklistRecord) => void
 }
 
-export default function VerDetalhesChecklist({ record, onClose }: VerDetalhesChecklistProps) {
+export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDetalhesChecklistProps) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>Detalhes do Checklist</h2>
-        <button
-          className="nav-button"
-          onClick={onClose}
-          style={{ padding: '8px 16px', fontSize: '0.9rem' }}
-        >
-          Fechar
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {onEdit && (
+            <button
+              className="nav-button"
+              onClick={() => {
+                onEdit(record)
+                onClose()
+              }}
+              style={{ padding: '8px 16px', fontSize: '0.9rem', background: '#2c7700' }}
+            >
+              Editar
+            </button>
+          )}
+          <button
+            className="nav-button"
+            onClick={onClose}
+            style={{ padding: '8px 16px', fontSize: '0.9rem', background: '#666' }}
+          >
+            Fechar
+          </button>
+        </div>
       </div>
 
       {/* Brazões */}
@@ -101,7 +124,7 @@ export default function VerDetalhesChecklist({ record, onClose }: VerDetalhesChe
       {/* Prefixo */}
       <div className="form-section">
         <div className="form-group">
-          <label>Prefixo:</label>
+          <label>Modelo da Viatura:</label>
           <div className="radio-group">
             <div className={`radio-option ${record.prefixed === 'spin' ? 'selected' : ''}`}>
               <input
@@ -132,7 +155,7 @@ export default function VerDetalhesChecklist({ record, onClose }: VerDetalhesChe
       {/* Código Viatura */}
       <div className="form-section">
         <div className="form-group">
-          <label>Código da Viatura:</label>
+          <label>Prefixo:</label>
           <input
             type="text"
             value={record.codigo_viatura}
@@ -204,8 +227,9 @@ export default function VerDetalhesChecklist({ record, onClose }: VerDetalhesChe
         </div>
       </div>
 
-      {/* KM e Abastecimento */}
+      {/* KM */}
       <div className="form-section">
+        <h2>KM</h2>
         <div className="form-row">
           <div className="form-group">
             <label>KM Inicial:</label>
@@ -225,66 +249,36 @@ export default function VerDetalhesChecklist({ record, onClose }: VerDetalhesChe
               style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Combustível e Abastecimento */}
+      <div className="form-section">
+        <h2>Combustível e Abastecimento</h2>
+        <div className="form-row">
+          <div className="form-group">
+            <label>Combustível Inicial:</label>
+            <input
+              type="text"
+              value={numeroParaOpcao(record.combustivel_inicial)}
+              readOnly
+              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+            />
+          </div>
+          <div className="form-group">
+            <label>Combustível Final:</label>
+            <input
+              type="text"
+              value={numeroParaOpcao(record.combustivel_final)}
+              readOnly
+              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+            />
+          </div>
           <div className="form-group">
             <label>Abastecimento (L):</label>
             <input
               type="number"
               value={record.abastecimento}
-              readOnly
-              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Motorista */}
-      <div className="form-section">
-        <div className="form-group">
-          <label>Motorista:</label>
-          <div className="radio-group">
-            <div className={`radio-option ${record.motorista === 'CMT' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                name="motorista"
-                value="CMT"
-                checked={record.motorista === 'CMT'}
-                readOnly
-                disabled
-              />
-              <label>CMT</label>
-            </div>
-            <div className={`radio-option ${record.motorista === 'PTR' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                name="motorista"
-                value="PTR"
-                checked={record.motorista === 'PTR'}
-                readOnly
-                disabled
-              />
-              <label>PTR</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Combustível */}
-      <div className="form-section">
-        <div className="form-row">
-          <div className="form-group">
-            <label>Combustível Inicial (%):</label>
-            <input
-              type="number"
-              value={record.combustivel_inicial}
-              readOnly
-              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-            />
-          </div>
-          <div className="form-group">
-            <label>Combustível Final (%):</label>
-            <input
-              type="number"
-              value={record.combustivel_final}
               readOnly
               style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
             />

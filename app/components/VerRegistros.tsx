@@ -9,14 +9,13 @@ import VerDetalhesChecklist from './VerDetalhesChecklist'
 interface ChecklistRecord {
   id: string
   data: string
-  prefixed: string
+  prefixed: 'spin' | 's10'
   codigo_viatura: string
-  servico: string
-  turno: string
+  servico: 'Ordinario' | 'SEG'
+  turno: 'Primeiro' | 'Segundo'
   km_inicial: number
   km_final: number
   abastecimento: number
-  motorista: string
   combustivel_inicial: number
   combustivel_final: number
   avarias: Record<string, { tipo: string; observacao: string }>
@@ -27,7 +26,11 @@ interface ChecklistRecord {
   created_at: string
 }
 
-export default function VerRegistros() {
+interface VerRegistrosProps {
+  onEdit?: (record: ChecklistRecord) => void
+}
+
+export default function VerRegistros({ onEdit }: VerRegistrosProps) {
   const [records, setRecords] = useState<ChecklistRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +81,7 @@ export default function VerRegistros() {
   }
 
   if (selectedRecord) {
-    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} />
+    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} onEdit={onEdit} />
   }
 
   return (

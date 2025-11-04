@@ -256,6 +256,24 @@ a {
   transform: none;
 }
 
+.edit-button {
+  background: #2c7700;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.edit-button:hover {
+  background: #228800;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 119, 0, 0.4);
+}
+
 .filters {
   display: flex;
   gap: 20px;
