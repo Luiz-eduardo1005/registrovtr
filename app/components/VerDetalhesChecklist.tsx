@@ -333,7 +333,7 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
             />
           </div>
           <div className="form-group">
-            <label>Nome:</label>
+            <label>Motorista:</label>
             <input
               type="text"
               value={record.nome || ''}
