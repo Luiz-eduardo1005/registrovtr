@@ -440,7 +440,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
                     value={opcao.value}
                     checked={combustivelFinal === opcao.value}
                     onChange={(e) => setCombustivelFinal(e.target.value)}
-                    required
+                  
                   />
                   <label>{opcao.label}</label>
                 </div>
@@ -454,7 +454,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
               step="0.01"
               value={abastecimento}
               onChange={(e) => setAbastecimento(e.target.value)}
-              required
+              
             />
           </div>
         </div>
