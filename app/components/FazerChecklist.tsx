@@ -489,9 +489,19 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
         </div>
       )}
 
-      {/* CI e OPM */}
+      {/* Motorista, CI e OPM */}
       {camposHabilitados && (
         <div className="form-section">
+          <div className="form-group">
+            <label>Motorista que está fazendo o registro:</label>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              required
+              placeholder="Digite o nome completo"
+            />
+          </div>
           <div className="form-row">
             <div className="form-group">
               <label>CI:</label>
@@ -511,22 +521,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
                 required
               />
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Nome */}
-      {camposHabilitados && (
-        <div className="form-section">
-          <div className="form-group">
-            <label>Motorista que está fazendo o registro:</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              required
-              placeholder="Digite o nome completo"
-            />
           </div>
         </div>
       )}
