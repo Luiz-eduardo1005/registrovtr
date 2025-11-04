@@ -401,7 +401,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
                 type="number"
                 value={kmFinal}
                 onChange={(e) => setKmFinal(e.target.value)}
-                required
               />
             </div>
           </div>
