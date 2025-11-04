@@ -330,7 +330,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
                 checked={servico === 'Ordinario'}
                 onChange={(e) => setServico(e.target.value as 'Ordinario')}
                 required
-                disabled={!camposHabilitados}
               />
               <label>Ordinário</label>
             </div>
@@ -342,7 +341,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
                 checked={servico === 'SEG'}
                 onChange={(e) => setServico(e.target.value as 'SEG')}
                 required
-                disabled={!camposHabilitados}
               />
               <label>SEG</label>
             </div>
