@@ -109,7 +109,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
   }
 
   if (selectedRecord) {
-    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} onEdit={onEdit} />
+    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} />
   }
 
   return (

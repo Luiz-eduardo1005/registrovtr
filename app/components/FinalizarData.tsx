@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import VerDetalhesChecklist from './VerDetalhesChecklist'
 
+const CODIGOS_SPIN = ['1348', '1369', '1399']
+const CODIGOS_S10 = ['1012', '1028']
+
 // Função para formatar data YYYY-MM-DD para dd/MM/yyyy sem problemas de timezone
 const formatarData = (dataString: string): string => {
   if (!dataString) return ''
@@ -54,16 +57,33 @@ interface ChecklistRecord {
   finalizado?: boolean
 }
 
-export default function FinalizarChecklist() {
+interface FinalizarChecklistProps {
+  onEdit?: (record: ChecklistRecord) => void
+}
+
+export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) {
   const [records, setRecords] = useState<ChecklistRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [filtroData, setFiltroData] = useState('')
+  const [filtroModelo, setFiltroModelo] = useState<'spin' | 's10' | ''>('')
   const [filtroPrefixo, setFiltroPrefixo] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<ChecklistRecord | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [finalizando, setFinalizando] = useState(false)
+
+  // Limpar filtro de prefixo quando o modelo mudar
+  useEffect(() => {
+    if (filtroModelo && filtroPrefixo) {
+      const codigosValidos = filtroModelo === 'spin' ? CODIGOS_SPIN : CODIGOS_S10
+      if (!codigosValidos.includes(filtroPrefixo)) {
+        setFiltroPrefixo('')
+      }
+    }
+  }, [filtroModelo])
+
+  const codigosDisponiveis = filtroModelo === 'spin' ? CODIGOS_SPIN : filtroModelo === 's10' ? CODIGOS_S10 : []
 
   useEffect(() => {
     carregarRegistros()
@@ -77,14 +97,22 @@ export default function FinalizarChecklist() {
       let query = supabase
         .from('checklists')
         .select('*')
+        // Mostrar apenas registros pendentes (não finalizados)
+        // Verifica se finalizado é false ou null
+        .or('finalizado.is.null,finalizado.eq.false')
+        .order('codigo_viatura', { ascending: true })
         .order('created_at', { ascending: false })
 
       if (filtroData) {
         query = query.eq('data', filtroData)
       }
 
+      if (filtroModelo) {
+        query = query.eq('prefixed', filtroModelo)
+      }
+
       if (filtroPrefixo) {
-        query = query.eq('prefixed', filtroPrefixo)
+        query = query.eq('codigo_viatura', filtroPrefixo)
       }
 
       const { data, error: fetchError } = await query
@@ -103,7 +131,7 @@ export default function FinalizarChecklist() {
 
   useEffect(() => {
     carregarRegistros()
-  }, [filtroData, filtroPrefixo])
+  }, [filtroData, filtroModelo, filtroPrefixo])
 
   const handleToggleSelect = (id: string) => {
     const newSelectedIds = new Set(selectedIds)
@@ -113,14 +141,6 @@ export default function FinalizarChecklist() {
       newSelectedIds.add(id)
     }
     setSelectedIds(newSelectedIds)
-  }
-
-  const handleSelectAll = () => {
-    if (selectedIds.size === records.length) {
-      setSelectedIds(new Set())
-    } else {
-      setSelectedIds(new Set(records.map(r => r.id)))
-    }
   }
 
   const handleFinalizar = async () => {
@@ -166,7 +186,7 @@ export default function FinalizarChecklist() {
   }
 
   if (selectedRecord) {
-    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} />
+    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} onEdit={onEdit} />
   }
 
   return (
@@ -201,14 +221,32 @@ export default function FinalizarChecklist() {
           />
         </div>
         <div className="form-group">
-          <label>Filtrar por Prefixo:</label>
+          <label>Filtrar por Modelo de Viatura:</label>
           <select
-            value={filtroPrefixo}
-            onChange={(e) => setFiltroPrefixo(e.target.value)}
+            value={filtroModelo}
+            onChange={(e) => {
+              setFiltroModelo(e.target.value as 'spin' | 's10' | '')
+              setFiltroPrefixo('')
+            }}
           >
             <option value="">Todos</option>
             <option value="spin">SPIN</option>
             <option value="s10">S10</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Filtrar por Prefixo:</label>
+          <select
+            value={filtroPrefixo}
+            onChange={(e) => setFiltroPrefixo(e.target.value)}
+            disabled={!filtroModelo}
+          >
+            <option value="">Todos</option>
+            {codigosDisponiveis.map((codigo) => (
+              <option key={codigo} value={codigo}>
+                {codigo}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -217,21 +255,10 @@ export default function FinalizarChecklist() {
       {success && <div className="success">Checklists finalizados com sucesso! Não será mais possível editar esses registros.</div>}
 
       {records.length === 0 ? (
-        <div className="loading">Nenhum registro encontrado</div>
+        <div className="loading">Nenhum registro pendente encontrado</div>
       ) : (
         <div>
-          <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={selectedIds.size === records.length && records.length > 0}
-                  onChange={handleSelectAll}
-                  style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                />
-                <span>Selecionar todos ({selectedIds.size} selecionados)</span>
-              </label>
-            </div>
+          <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <button
               type="button"
               className="submit-button"
@@ -243,58 +270,74 @@ export default function FinalizarChecklist() {
             </button>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table className="records-table">
-              <thead>
-                <tr>
-                  <th style={{ width: '50px' }}></th>
-                  <th>Data</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((record) => {
-                  const isSelected = selectedIds.has(record.id)
-                  const isFinalizado = record.finalizado === true
-                  
+          {/* Agrupar registros por prefixo */}
+          {(() => {
+            const registrosPorPrefixo = records.reduce((acc, record) => {
+              const prefixo = record.codigo_viatura
+              if (!acc[prefixo]) {
+                acc[prefixo] = []
+              }
+              acc[prefixo].push(record)
+              return acc
+            }, {} as Record<string, ChecklistRecord[]>)
+
+            const prefixosOrdenados = Object.keys(registrosPorPrefixo).sort()
+
+            return (
+              <div style={{ overflowX: 'auto' }}>
+                {prefixosOrdenados.map((prefixo) => {
+                  const registrosDoPrefixo = registrosPorPrefixo[prefixo]
                   return (
-                    <tr key={record.id} style={{ backgroundColor: isSelected ? '#e3f2fd' : isFinalizado ? '#fff3e0' : 'transparent' }}>
-                      <td>
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => handleToggleSelect(record.id)}
-                          disabled={isFinalizado}
-                          style={{ width: '18px', height: '18px', cursor: isFinalizado ? 'not-allowed' : 'pointer' }}
-                        />
-                      </td>
-                      <td>
-                        <span
-                          onClick={() => setSelectedRecord(record)}
-                          style={{
-                            cursor: 'pointer',
-                            color: isFinalizado ? '#666' : '#2c7700',
-                            textDecoration: 'underline',
-                            fontWeight: '600',
-                            fontSize: '1.1rem'
-                          }}
-                        >
-                          {formatarData(record.data)}
-                        </span>
-                      </td>
-                      <td>
-                        {isFinalizado ? (
-                          <span style={{ color: '#d32f2f', fontWeight: '600' }}>✓ Finalizado</span>
-                        ) : (
-                          <span style={{ color: '#666' }}>Pendente</span>
-                        )}
-                      </td>
-                    </tr>
+                    <div key={prefixo} style={{ marginBottom: '30px' }}>
+                      <h3 style={{ marginBottom: '10px', color: '#2c7700', fontSize: '1.2rem' }}>
+                        Prefixo: {prefixo}
+                      </h3>
+                      <table className="records-table">
+                        <thead>
+                          <tr>
+                            <th style={{ width: '50px' }}></th>
+                            <th>Data</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {registrosDoPrefixo.map((record) => {
+                            const isSelected = selectedIds.has(record.id)
+                            
+                            return (
+                              <tr key={record.id} style={{ backgroundColor: isSelected ? '#e3f2fd' : 'transparent' }}>
+                                <td>
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleToggleSelect(record.id)}
+                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                  />
+                                </td>
+                                <td>
+                                  <span
+                                    onClick={() => setSelectedRecord(record)}
+                                    style={{
+                                      cursor: 'pointer',
+                                      color: '#2c7700',
+                                      textDecoration: 'underline',
+                                      fontWeight: '600',
+                                      fontSize: '1.1rem'
+                                    }}
+                                  >
+                                    {formatarData(record.data)}
+                                  </span>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   )
                 })}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            )
+          })()}
         </div>
       )}
     </div>

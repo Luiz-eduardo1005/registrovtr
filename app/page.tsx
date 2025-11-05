@@ -29,15 +29,18 @@ interface ChecklistRecord {
 export default function Home() {
   const [view, setView] = useState<'fazer' | 'finalizar' | 'ver'>('fazer')
   const [editRecord, setEditRecord] = useState<ChecklistRecord | null>(null)
+  const [previousView, setPreviousView] = useState<'fazer' | 'finalizar' | 'ver'>('fazer')
 
   const handleEdit = (record: ChecklistRecord) => {
+    setPreviousView(view)
     setEditRecord(record)
     setView('fazer')
   }
 
   const handleCancelEdit = () => {
     setEditRecord(null)
-    setView('ver')
+    // Voltar para a aba de onde veio
+    setView(previousView)
   }
 
   const handleSuccess = () => {
@@ -88,8 +91,8 @@ export default function Home() {
           onSuccess={handleSuccess}
         />
       )}
-      {view === 'finalizar' && <FinalizarData />}
-      {view === 'ver' && <VerRegistros onEdit={handleEdit} />}
+      {view === 'finalizar' && <FinalizarData onEdit={handleEdit} />}
+      {view === 'ver' && <VerRegistros />}
     </div>
   )
 }
