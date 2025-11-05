@@ -159,7 +159,14 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
   // Preencher formulário quando estiver editando
   useEffect(() => {
     if (editRecord) {
-      setData(normalizarData(editRecord.data))
+      // Se a data já está no formato YYYY-MM-DD, usar diretamente
+      // Caso contrário, normalizar apenas para garantir o formato correto
+      const dataDoBanco = editRecord.data
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dataDoBanco)) {
+        setData(dataDoBanco)
+      } else {
+        setData(normalizarData(dataDoBanco))
+      }
       setPrefixed(editRecord.prefixed as 'spin' | 's10')
       setCodigoViatura(editRecord.codigo_viatura)
       setServico(editRecord.servico as 'Ordinario' | 'SEG')
@@ -200,12 +207,21 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
     setSuccess(false)
 
     try {
-      // Garantir que a data está no formato correto antes de salvar
-      // Se já está no formato YYYY-MM-DD (que é o padrão do input), usar diretamente
-      const dataNormalizada = /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : normalizarData(data)
+      // Validar que a data foi preenchida
+      if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
+        throw new Error('Por favor, selecione uma data válida')
+      }
+      
+      // Usar diretamente o valor do input (já está no formato YYYY-MM-DD)
+      // Não fazer nenhuma normalização para evitar problemas de timezone
+      const dataParaSalvar = data.trim()
+      
+      // Debug: verificar o valor antes de salvar (remover em produção)
+      console.log('Data selecionada pelo usuário:', data)
+      console.log('Data que será salva:', dataParaSalvar)
       
       const checklistData = {
-        data: dataNormalizada,
+        data: dataParaSalvar,
         prefixed,
         codigo_viatura: codigoViatura,
         servico,
@@ -314,10 +330,21 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
           <label>Data:</label>
           <input
             type="date"
-            value={data}
+            value={data || ''}
             onChange={(e) => {
-              // Aceita qualquer valor digitado ou selecionado - sem limitações
-              setData(e.target.value)
+              // Captura o valor diretamente do input
+              // O input type="date" sempre retorna YYYY-MM-DD
+              const valorSelecionado = e.target.value
+              if (valorSelecionado) {
+                setData(valorSelecionado)
+              }
+            }}
+            onBlur={(e) => {
+              // Garante que o valor seja mantido mesmo ao perder o foco
+              const valor = e.target.value
+              if (valor && valor !== data) {
+                setData(valor)
+              }
             }}
             required
           />
