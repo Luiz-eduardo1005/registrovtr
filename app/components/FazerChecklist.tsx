@@ -61,6 +61,51 @@ const opcaoParaNumero = (opcao: string): number => {
   }
 }
 
+// Função para normalizar o formato da data para YYYY-MM-DD
+const normalizarData = (data: string | Date | null | undefined): string => {
+  if (!data) {
+    return new Date().toISOString().split('T')[0]
+  }
+
+  // Se já está no formato YYYY-MM-DD, retorna diretamente
+  if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    return data
+  }
+
+  // Tenta converter para Date e depois para YYYY-MM-DD
+  try {
+    let dataObj: Date
+    
+    if (typeof data === 'string') {
+      // Se a string já está no formato YYYY-MM-DD, usa diretamente
+      if (/^\d{4}-\d{2}-\d{2}/.test(data)) {
+        const partes = data.split('T')[0].split('-')
+        if (partes.length === 3) {
+          return `${partes[0]}-${partes[1]}-${partes[2]}`
+        }
+      }
+      // Tenta criar Date a partir da string
+      dataObj = new Date(data)
+    } else {
+      dataObj = data
+    }
+
+    // Verifica se a data é válida
+    if (isNaN(dataObj.getTime())) {
+      return new Date().toISOString().split('T')[0]
+    }
+
+    // Ajusta para timezone local para evitar problemas de conversão
+    const ano = dataObj.getFullYear()
+    const mes = String(dataObj.getMonth() + 1).padStart(2, '0')
+    const dia = String(dataObj.getDate()).padStart(2, '0')
+    return `${ano}-${mes}-${dia}`
+  } catch (error) {
+    // Se houver erro, retorna a data atual
+    return new Date().toISOString().split('T')[0]
+  }
+}
+
 interface ChecklistRecord {
   id: string
   data: string
@@ -109,7 +154,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
   // Preencher formulário quando estiver editando
   useEffect(() => {
     if (editRecord) {
-      setData(editRecord.data)
+      setData(normalizarData(editRecord.data))
       setPrefixed(editRecord.prefixed as 'spin' | 's10')
       setCodigoViatura(editRecord.codigo_viatura)
       setServico(editRecord.servico as 'Ordinario' | 'SEG')
@@ -125,6 +170,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       setOpm(editRecord.opm)
       setNome(editRecord.nome || '')
     }
+    // Não resetar a data quando não há editRecord, para permitir que o usuário selecione a data desejada
   }, [editRecord])
 
   // Limpar código da viatura quando o prefixo mudar
@@ -150,7 +196,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
 
     try {
       const checklistData = {
-        data,
+        data: normalizarData(data),
         prefixed,
         codigo_viatura: codigoViatura,
         servico,
@@ -259,8 +305,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
           <label>Data:</label>
           <input
             type="date"
-            value={data}
-            onChange={(e) => setData(e.target.value)}
+            value={data || ''}
+            onChange={(e) => {
+              const valor = e.target.value
+              if (valor) {
+                setData(normalizarData(valor))
+              }
+            }}
             required
           />
         </div>
