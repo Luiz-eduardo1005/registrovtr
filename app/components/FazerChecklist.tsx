@@ -137,7 +137,7 @@ interface FazerChecklistProps {
 }
 
 export default function FazerChecklist({ editRecord, onCancel, onSuccess }: FazerChecklistProps) {
-  const [data, setData] = useState(new Date().toISOString().split('T')[0])
+  const [data, setData] = useState('')
   const [prefixed, setPrefixed] = useState<'spin' | 's10' | ''>('')
   const [codigoViatura, setCodigoViatura] = useState('')
   const [servico, setServico] = useState<'Ordinario' | 'SEG' | ''>('')
@@ -243,7 +243,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       
       // Limpar formulário apenas se não estiver editando
       if (!editRecord) {
-        setData(new Date().toISOString().split('T')[0])
+        setData('')
         setPrefixed('')
         setCodigoViatura('')
         setServico('')
@@ -314,10 +314,9 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
           <label>Data:</label>
           <input
             type="date"
-            value={data || ''}
+            value={data}
             onChange={(e) => {
-              // O input type="date" já retorna o valor no formato YYYY-MM-DD
-              // Não precisamos normalizar aqui para evitar problemas de timezone
+              // Aceita qualquer valor digitado ou selecionado - sem limitações
               setData(e.target.value)
             }}
             required

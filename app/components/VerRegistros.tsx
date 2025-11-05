@@ -2,9 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale/pt-BR'
 import VerDetalhesChecklist from './VerDetalhesChecklist'
+
+// Função para formatar data YYYY-MM-DD para dd/MM/yyyy sem problemas de timezone
+const formatarData = (dataString: string): string => {
+  if (!dataString) return ''
+  
+  // Se já está no formato YYYY-MM-DD, extrai as partes diretamente
+  if (/^\d{4}-\d{2}-\d{2}/.test(dataString)) {
+    const partes = dataString.split('T')[0].split('-')
+    if (partes.length === 3) {
+      const [ano, mes, dia] = partes
+      return `${dia}/${mes}/${ano}`
+    }
+  }
+  
+  // Se não estiver no formato esperado, tenta converter
+  try {
+    const data = new Date(dataString)
+    if (!isNaN(data.getTime())) {
+      const dia = String(data.getDate()).padStart(2, '0')
+      const mes = String(data.getMonth() + 1).padStart(2, '0')
+      const ano = data.getFullYear()
+      return `${dia}/${mes}/${ano}`
+    }
+  } catch (error) {
+    // Se houver erro, retorna a string original
+  }
+  
+  return dataString
+}
 
 interface ChecklistRecord {
   id: string
@@ -154,7 +181,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                         fontSize: '1.1rem'
                       }}
                     >
-                      {format(new Date(record.data), 'dd/MM/yyyy', { locale: ptBR })}
+                      {formatarData(record.data)}
                     </span>
                   </td>
                 </tr>
