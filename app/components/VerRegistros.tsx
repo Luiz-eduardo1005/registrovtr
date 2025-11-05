@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import VerDetalhesChecklist from './VerDetalhesChecklist'
 
+const CODIGOS_SPIN = ['1348', '1369', '1399']
+const CODIGOS_S10 = ['1012', '1028']
+
+const AVARIAS = [
+  'Quebrado', 'Trincado', 'Riscado', 'Amassado', 'Batido', 'Não Possui',
+  'Furado', 'Rasgado', 'Gasto', 'Baixo', 'Queimado', 'Barulho',
+  'Com Defeito', 'Empenado', 'Vazando', 'Estourado', 'Descolando', 'Suja'
+]
+
 // Função para formatar data YYYY-MM-DD para dd/MM/yyyy sem problemas de timezone
 const formatarData = (dataString: string): string => {
   if (!dataString) return ''
@@ -54,6 +63,14 @@ interface ChecklistRecord {
   finalizado?: boolean
 }
 
+// Função para verificar se um registro tem uma avaria específica
+const temAvaria = (record: ChecklistRecord, tipoAvaria: string): boolean => {
+  if (!record.avarias || !tipoAvaria) return false
+  
+  // Verifica se alguma avaria tem o tipo especificado
+  return Object.values(record.avarias).some(avaria => avaria.tipo === tipoAvaria)
+}
+
 interface VerRegistrosProps {
   onEdit?: (record: ChecklistRecord) => void
 }
@@ -63,8 +80,22 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filtroData, setFiltroData] = useState('')
+  const [filtroModelo, setFiltroModelo] = useState<'spin' | 's10' | ''>('')
   const [filtroPrefixo, setFiltroPrefixo] = useState('')
+  const [filtroAvaria, setFiltroAvaria] = useState('')
   const [selectedRecord, setSelectedRecord] = useState<ChecklistRecord | null>(null)
+
+  // Limpar filtro de prefixo quando o modelo mudar
+  useEffect(() => {
+    if (filtroModelo && filtroPrefixo) {
+      const codigosValidos = filtroModelo === 'spin' ? CODIGOS_SPIN : CODIGOS_S10
+      if (!codigosValidos.includes(filtroPrefixo)) {
+        setFiltroPrefixo('')
+      }
+    }
+  }, [filtroModelo])
+
+  const codigosDisponiveis = filtroModelo === 'spin' ? CODIGOS_SPIN : filtroModelo === 's10' ? CODIGOS_S10 : []
 
   useEffect(() => {
     carregarRegistros()
@@ -84,15 +115,28 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
         query = query.eq('data', filtroData)
       }
 
+      if (filtroModelo) {
+        query = query.eq('prefixed', filtroModelo)
+      }
+
       if (filtroPrefixo) {
-        query = query.eq('prefixed', filtroPrefixo)
+        query = query.eq('codigo_viatura', filtroPrefixo)
       }
 
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
 
-      setRecords(data || [])
+      // Filtrar por avaria no lado do cliente (já que avarias é JSONB)
+      let registrosFiltrados = data || []
+      
+      if (filtroAvaria) {
+        registrosFiltrados = registrosFiltrados.filter(record => 
+          temAvaria(record, filtroAvaria)
+        )
+      }
+
+      setRecords(registrosFiltrados)
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar registros')
     } finally {
@@ -102,7 +146,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
 
   useEffect(() => {
     carregarRegistros()
-  }, [filtroData, filtroPrefixo])
+  }, [filtroData, filtroModelo, filtroPrefixo, filtroAvaria])
 
   if (loading) {
     return <div className="loading">Carregando registros...</div>
@@ -144,14 +188,46 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
           />
         </div>
         <div className="form-group">
-          <label>Filtrar por Prefixo:</label>
+          <label>Filtrar por Modelo de Viatura:</label>
           <select
-            value={filtroPrefixo}
-            onChange={(e) => setFiltroPrefixo(e.target.value)}
+            value={filtroModelo}
+            onChange={(e) => {
+              setFiltroModelo(e.target.value as 'spin' | 's10' | '')
+              setFiltroPrefixo('')
+            }}
           >
             <option value="">Todos</option>
             <option value="spin">SPIN</option>
             <option value="s10">S10</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Filtrar por Prefixo:</label>
+          <select
+            value={filtroPrefixo}
+            onChange={(e) => setFiltroPrefixo(e.target.value)}
+            disabled={!filtroModelo}
+          >
+            <option value="">Todos</option>
+            {codigosDisponiveis.map((codigo) => (
+              <option key={codigo} value={codigo}>
+                {codigo}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Filtrar por Avaria:</label>
+          <select
+            value={filtroAvaria}
+            onChange={(e) => setFiltroAvaria(e.target.value)}
+          >
+            <option value="">Todas</option>
+            {AVARIAS.map((avaria) => (
+              <option key={avaria} value={avaria}>
+                {avaria}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -165,12 +241,18 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
           <table className="records-table">
             <thead>
               <tr>
+                <th>Prefixo</th>
                 <th>Data</th>
               </tr>
             </thead>
             <tbody>
               {records.map((record) => (
                 <tr key={record.id}>
+                  <td>
+                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                      {record.codigo_viatura}
+                    </span>
+                  </td>
                   <td>
                     <span
                       onClick={() => setSelectedRecord(record)}

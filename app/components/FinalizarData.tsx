@@ -297,6 +297,7 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                           <tr>
                             <th style={{ width: '50px' }}></th>
                             <th>Data</th>
+                            <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -325,6 +326,11 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                                     }}
                                   >
                                     {formatarData(record.data)}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span style={{ color: '#ff9800', fontWeight: '600' }}>
+                                    ⏳ Pendente
                                   </span>
                                 </td>
                               </tr>
