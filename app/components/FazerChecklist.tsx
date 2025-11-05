@@ -62,28 +62,33 @@ const opcaoParaNumero = (opcao: string): number => {
 }
 
 // Função para normalizar o formato da data para YYYY-MM-DD
+// IMPORTANTE: Quando o valor já está no formato YYYY-MM-DD, retorna diretamente
+// sem fazer conversões para evitar problemas de timezone
 const normalizarData = (data: string | Date | null | undefined): string => {
   if (!data) {
     return new Date().toISOString().split('T')[0]
   }
 
-  // Se já está no formato YYYY-MM-DD, retorna diretamente
+  // Se já está no formato YYYY-MM-DD, retorna diretamente SEM conversão
+  // Isso evita problemas de timezone que podem mudar o dia
   if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
     return data
   }
 
-  // Tenta converter para Date e depois para YYYY-MM-DD
+  // Se é uma string no formato YYYY-MM-DD com tempo (ex: "2025-01-05T00:00:00")
+  // Extrai apenas a parte da data
+  if (typeof data === 'string' && /^\d{4}-\d{2}-\d{2}/.test(data)) {
+    const partes = data.split('T')[0].split('-')
+    if (partes.length === 3 && /^\d{4}-\d{2}-\d{2}$/.test(partes.join('-'))) {
+      return partes.join('-')
+    }
+  }
+
+  // Apenas converte para Date se realmente necessário (casos de formatação diferente do banco)
   try {
     let dataObj: Date
     
     if (typeof data === 'string') {
-      // Se a string já está no formato YYYY-MM-DD, usa diretamente
-      if (/^\d{4}-\d{2}-\d{2}/.test(data)) {
-        const partes = data.split('T')[0].split('-')
-        if (partes.length === 3) {
-          return `${partes[0]}-${partes[1]}-${partes[2]}`
-        }
-      }
       // Tenta criar Date a partir da string
       dataObj = new Date(data)
     } else {
@@ -195,8 +200,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
     setSuccess(false)
 
     try {
+      // Garantir que a data está no formato correto antes de salvar
+      // Se já está no formato YYYY-MM-DD (que é o padrão do input), usar diretamente
+      const dataNormalizada = /^\d{4}-\d{2}-\d{2}$/.test(data) ? data : normalizarData(data)
+      
       const checklistData = {
-        data: normalizarData(data),
+        data: dataNormalizada,
         prefixed,
         codigo_viatura: codigoViatura,
         servico,
@@ -307,10 +316,9 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
             type="date"
             value={data || ''}
             onChange={(e) => {
-              const valor = e.target.value
-              if (valor) {
-                setData(normalizarData(valor))
-              }
+              // O input type="date" já retorna o valor no formato YYYY-MM-DD
+              // Não precisamos normalizar aqui para evitar problemas de timezone
+              setData(e.target.value)
             }}
             required
           />
