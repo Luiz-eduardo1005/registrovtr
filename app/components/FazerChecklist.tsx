@@ -128,6 +128,7 @@ interface ChecklistRecord {
   ci: string
   opm: string
   nome: string
+  telefone?: string
   finalizado?: boolean
 }
 
@@ -135,9 +136,11 @@ interface FazerChecklistProps {
   editRecord?: ChecklistRecord | null
   onCancel?: () => void
   onSuccess?: () => void
+  isFinalizarMode?: boolean
+  onFinalizar?: () => void
 }
 
-export default function FazerChecklist({ editRecord, onCancel, onSuccess }: FazerChecklistProps) {
+export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFinalizarMode = false, onFinalizar }: FazerChecklistProps) {
   const [data, setData] = useState('')
   const [prefixed, setPrefixed] = useState<'spin' | 's10' | ''>('')
   const [codigoViatura, setCodigoViatura] = useState('')
@@ -153,6 +156,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
   const [ci, setCi] = useState('')
   const [opm, setOpm] = useState('')
   const [nome, setNome] = useState('')
+  const [telefone, setTelefone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -209,6 +213,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       setCi(editRecord.ci)
       setOpm(editRecord.opm)
       setNome(editRecord.nome || '')
+      setTelefone(editRecord.telefone || '')
     } else {
       // Quando não está editando, não há registro finalizado
       setDataFinalizada(false)
@@ -231,8 +236,10 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
   // Determina se os campos devem estar habilitados (quando turno está selecionado)
   const camposHabilitados = !!turno
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault()
+    }
     setLoading(true)
     setError(null)
     setSuccess(false)
@@ -274,7 +281,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
         observacoes,
         ci,
         opm,
-        nome
+        nome,
+        telefone
       }
 
       if (editRecord) {
@@ -313,6 +321,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
         setCi('')
         setOpm('')
         setNome('')
+        setTelefone('')
       }
 
       setTimeout(() => {
@@ -321,6 +330,61 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar checklist')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleFinalizar = async () => {
+    if (!editRecord) return
+
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const registroEstaFinalizado = await verificarRegistroFinalizado()
+      if (registroEstaFinalizado) {
+        throw new Error('Este checklist foi finalizado e não pode ser editado.')
+      }
+
+      // Primeiro salvar as alterações
+      const checklistData = {
+        data: data.trim(),
+        prefixed,
+        codigo_viatura: codigoViatura,
+        servico,
+        turno,
+        km_inicial: parseInt(kmInicial) || 0,
+        km_final: parseInt(kmFinal) || 0,
+        abastecimento: parseFloat(abastecimento) || 0,
+        combustivel_inicial: opcaoParaNumero(combustivelInicial),
+        combustivel_final: opcaoParaNumero(combustivelFinal),
+        avarias: avarias,
+        observacoes,
+        ci,
+        opm,
+        nome,
+        telefone,
+        finalizado: true
+      }
+
+      const { error: updateError } = await supabase
+        .from('checklists')
+        .update(checklistData)
+        .eq('id', editRecord.id)
+
+      if (updateError) throw updateError
+
+      setSuccess(true)
+      
+      setTimeout(() => {
+        setSuccess(false)
+        if (onFinalizar) onFinalizar()
+        if (onSuccess) onSuccess()
+      }, 2000)
+    } catch (err: any) {
+      setError(err.message || 'Erro ao finalizar checklist')
     } finally {
       setLoading(false)
     }
@@ -640,7 +704,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
               />
             </div>
             <div className="form-group">
-              <label>OPM:</label>
+              <label>OPM do Militar:</label>
               <input
                 type="text"
                 value={opm}
@@ -649,14 +713,58 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
               />
             </div>
           </div>
+          <div className="form-group">
+            <label>Telefone de Contato:</label>
+            <input
+              type="text"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
         </div>
       )}
 
       {/* Botão Submit */}
       {camposHabilitados && (
-        <button type="submit" className="submit-button" disabled={loading || dataFinalizada}>
-          {loading ? (editRecord ? 'Atualizando...' : 'Registrando...') : (editRecord ? 'Atualizar Checklist' : 'Registrar Checklist')}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+          {isFinalizarMode && editRecord ? (
+            <>
+              <button 
+                type="button" 
+                className="submit-button" 
+                onClick={handleSubmit}
+                disabled={loading || dataFinalizada}
+                style={{ background: '#2c7700' }}
+              >
+                {loading ? 'Salvando...' : 'Salvar Alterações'}
+              </button>
+              <button 
+                type="button" 
+                className="submit-button" 
+                onClick={handleFinalizar}
+                disabled={loading || dataFinalizada}
+                style={{ background: '#d32f2f' }}
+              >
+                {loading ? 'Finalizando...' : 'Finalizar Checklist'}
+              </button>
+              {onCancel && (
+                <button
+                  type="button"
+                  className="nav-button"
+                  onClick={onCancel}
+                  style={{ padding: '8px 16px', fontSize: '0.9rem', background: '#666' }}
+                >
+                  Cancelar
+                </button>
+              )}
+            </>
+          ) : (
+            <button type="submit" className="submit-button" disabled={loading || dataFinalizada}>
+              {loading ? (editRecord ? 'Atualizando...' : 'Registrando...') : (editRecord ? 'Atualizar Checklist' : 'Registrar Checklist')}
+            </button>
+          )}
+        </div>
       )}
     </form>
   )

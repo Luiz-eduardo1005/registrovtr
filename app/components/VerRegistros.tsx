@@ -63,6 +63,11 @@ interface ChecklistRecord {
   finalizado?: boolean
 }
 
+// Função para formatar modelo
+const formatarModelo = (prefixed: 'spin' | 's10'): string => {
+  return prefixed === 'spin' ? 'SPIN' : 'S10'
+}
+
 // Função para verificar se um registro tem uma avaria específica
 const temAvaria = (record: ChecklistRecord, tipoAvaria: string): boolean => {
   if (!record.avarias || !tipoAvaria) return false
@@ -83,6 +88,8 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
   const [filtroModelo, setFiltroModelo] = useState<'spin' | 's10' | ''>('')
   const [filtroPrefixo, setFiltroPrefixo] = useState('')
   const [filtroAvaria, setFiltroAvaria] = useState('')
+  const [filtroTurno, setFiltroTurno] = useState<'Primeiro' | 'Segundo' | ''>('')
+  const [filtroServico, setFiltroServico] = useState<'Ordinario' | 'SEG' | ''>('')
   const [selectedRecord, setSelectedRecord] = useState<ChecklistRecord | null>(null)
 
   // Limpar filtro de prefixo quando o modelo mudar
@@ -109,6 +116,8 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
       let query = supabase
         .from('checklists')
         .select('*')
+        // Mostrar apenas registros finalizados
+        .eq('finalizado', true)
         .order('created_at', { ascending: false })
 
       if (filtroData) {
@@ -121,6 +130,14 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
 
       if (filtroPrefixo) {
         query = query.eq('codigo_viatura', filtroPrefixo)
+      }
+
+      if (filtroTurno) {
+        query = query.eq('turno', filtroTurno)
+      }
+
+      if (filtroServico) {
+        query = query.eq('servico', filtroServico)
       }
 
       const { data, error: fetchError } = await query
@@ -146,7 +163,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
 
   useEffect(() => {
     carregarRegistros()
-  }, [filtroData, filtroModelo, filtroPrefixo, filtroAvaria])
+  }, [filtroData, filtroModelo, filtroPrefixo, filtroAvaria, filtroTurno, filtroServico])
 
   if (loading) {
     return <div className="loading">Carregando registros...</div>
@@ -230,6 +247,28 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
             ))}
           </select>
         </div>
+        <div className="form-group">
+          <label>Filtrar por Turno:</label>
+          <select
+            value={filtroTurno}
+            onChange={(e) => setFiltroTurno(e.target.value as 'Primeiro' | 'Segundo' | '')}
+          >
+            <option value="">Todos</option>
+            <option value="Primeiro">Primeiro Turno</option>
+            <option value="Segundo">Segundo Turno</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Filtrar por Serviço:</label>
+          <select
+            value={filtroServico}
+            onChange={(e) => setFiltroServico(e.target.value as 'Ordinario' | 'SEG' | '')}
+          >
+            <option value="">Todos</option>
+            <option value="Ordinario">Ordinário</option>
+            <option value="SEG">SEG</option>
+          </select>
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}
@@ -242,6 +281,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
             <thead>
               <tr>
                 <th>Prefixo</th>
+                <th>Modelo</th>
                 <th>Data</th>
               </tr>
             </thead>
@@ -251,6 +291,11 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                   <td>
                     <span style={{ fontWeight: '600', fontSize: '1rem' }}>
                       {record.codigo_viatura}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                      {formatarModelo(record.prefixed)}
                     </span>
                   </td>
                   <td>

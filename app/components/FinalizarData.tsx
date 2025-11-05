@@ -36,6 +36,11 @@ const formatarData = (dataString: string): string => {
   return dataString
 }
 
+// Função para formatar modelo
+const formatarModelo = (prefixed: 'spin' | 's10'): string => {
+  return prefixed === 'spin' ? 'SPIN' : 'S10'
+}
+
 interface ChecklistRecord {
   id: string
   data: string
@@ -69,6 +74,8 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
   const [filtroData, setFiltroData] = useState('')
   const [filtroModelo, setFiltroModelo] = useState<'spin' | 's10' | ''>('')
   const [filtroPrefixo, setFiltroPrefixo] = useState('')
+  const [filtroTurno, setFiltroTurno] = useState<'Primeiro' | 'Segundo' | ''>('')
+  const [filtroServico, setFiltroServico] = useState<'Ordinario' | 'SEG' | ''>('')
   const [selectedRecord, setSelectedRecord] = useState<ChecklistRecord | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [finalizando, setFinalizando] = useState(false)
@@ -115,6 +122,14 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
         query = query.eq('codigo_viatura', filtroPrefixo)
       }
 
+      if (filtroTurno) {
+        query = query.eq('turno', filtroTurno)
+      }
+
+      if (filtroServico) {
+        query = query.eq('servico', filtroServico)
+      }
+
       const { data, error: fetchError } = await query
 
       if (fetchError) throw fetchError
@@ -131,7 +146,7 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
 
   useEffect(() => {
     carregarRegistros()
-  }, [filtroData, filtroModelo, filtroPrefixo])
+  }, [filtroData, filtroModelo, filtroPrefixo, filtroTurno, filtroServico])
 
   const handleToggleSelect = (id: string) => {
     const newSelectedIds = new Set(selectedIds)
@@ -183,6 +198,13 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
 
   if (loading) {
     return <div className="loading">Carregando registros...</div>
+  }
+
+  // Se um registro foi selecionado para edição, abrir automaticamente em modo de edição
+  if (selectedRecord && onEdit) {
+    onEdit(selectedRecord)
+    setSelectedRecord(null) // Limpar após chamar onEdit
+    return null
   }
 
   if (selectedRecord) {
@@ -249,6 +271,28 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
             ))}
           </select>
         </div>
+        <div className="form-group">
+          <label>Filtrar por Turno:</label>
+          <select
+            value={filtroTurno}
+            onChange={(e) => setFiltroTurno(e.target.value as 'Primeiro' | 'Segundo' | '')}
+          >
+            <option value="">Todos</option>
+            <option value="Primeiro">Primeiro Turno</option>
+            <option value="Segundo">Segundo Turno</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Filtrar por Serviço:</label>
+          <select
+            value={filtroServico}
+            onChange={(e) => setFiltroServico(e.target.value as 'Ordinario' | 'SEG' | '')}
+          >
+            <option value="">Todos</option>
+            <option value="Ordinario">Ordinário</option>
+            <option value="SEG">SEG</option>
+          </select>
+        </div>
       </div>
 
       {error && <div className="error">{error}</div>}
@@ -296,6 +340,8 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                         <thead>
                           <tr>
                             <th style={{ width: '50px' }}></th>
+                            <th>Prefixo</th>
+                            <th>Modelo</th>
                             <th>Data</th>
                             <th>Status</th>
                           </tr>
@@ -313,6 +359,16 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                                     onChange={() => handleToggleSelect(record.id)}
                                     style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                                   />
+                                </td>
+                                <td>
+                                  <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                                    {record.codigo_viatura}
+                                  </span>
+                                </td>
+                                <td>
+                                  <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                                    {formatarModelo(record.prefixed)}
+                                  </span>
                                 </td>
                                 <td>
                                   <span

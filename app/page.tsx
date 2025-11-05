@@ -89,6 +89,11 @@ export default function Home() {
           editRecord={editRecord}
           onCancel={editRecord ? handleCancelEdit : undefined}
           onSuccess={handleSuccess}
+          isFinalizarMode={previousView === 'finalizar'}
+          onFinalizar={() => {
+            setEditRecord(null)
+            setView('finalizar')
+          }}
         />
       )}
       {view === 'finalizar' && <FinalizarData onEdit={handleEdit} />}
