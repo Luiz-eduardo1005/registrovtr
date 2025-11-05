@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 import TabelaAvarias from './TabelaAvarias'
 
 const AVARIAS = [
@@ -63,12 +65,36 @@ interface VerDetalhesChecklistProps {
 }
 
 export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDetalhesChecklistProps) {
+  const [dataFinalizada, setDataFinalizada] = useState(false)
+
+  useEffect(() => {
+    const verificarDataFinalizada = async () => {
+      if (!record.data || !/^\d{4}-\d{2}-\d{2}$/.test(record.data)) {
+        return
+      }
+
+      try {
+        const { data: dataFinalizada, error } = await supabase
+          .from('datas_finalizadas')
+          .select('data')
+          .eq('data', record.data)
+          .single()
+
+        setDataFinalizada(!error && dataFinalizada !== null)
+      } catch (error) {
+        setDataFinalizada(false)
+      }
+    }
+
+    verificarDataFinalizada()
+  }, [record.data])
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>Detalhes do Checklist</h2>
         <div style={{ display: 'flex', gap: '10px' }}>
-          {onEdit && (
+          {onEdit && !dataFinalizada && (
             <button
               className="nav-button"
               onClick={() => {
@@ -79,6 +105,11 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
             >
               Editar
             </button>
+          )}
+          {dataFinalizada && (
+            <div style={{ padding: '8px 16px', fontSize: '0.9rem', background: '#ffebee', color: '#c62828', borderRadius: '4px', border: '1px solid #c62828' }}>
+              ⚠️ Data finalizada - não pode ser editada
+            </div>
           )}
           <button
             className="nav-button"

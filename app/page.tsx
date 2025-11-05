@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import VerRegistros from './components/VerRegistros'
 import FazerChecklist from './components/FazerChecklist'
+import FinalizarData from './components/FinalizarData'
 
 interface ChecklistRecord {
   id: string
@@ -25,7 +26,7 @@ interface ChecklistRecord {
 }
 
 export default function Home() {
-  const [view, setView] = useState<'ver' | 'fazer'>('ver')
+  const [view, setView] = useState<'fazer' | 'finalizar' | 'ver'>('fazer')
   const [editRecord, setEditRecord] = useState<ChecklistRecord | null>(null)
 
   const handleEdit = (record: ChecklistRecord) => {
@@ -50,15 +51,6 @@ export default function Home() {
         <h1>Registro de Checklist de Viatura</h1>
         <div className="nav-menu">
           <button
-            className={`nav-button ${view === 'ver' ? 'active' : ''}`}
-            onClick={() => {
-              setView('ver')
-              setEditRecord(null)
-            }}
-          >
-            Ver Registros de Checklists
-          </button>
-          <button
             className={`nav-button ${view === 'fazer' ? 'active' : ''}`}
             onClick={() => {
               setView('fazer')
@@ -67,10 +59,27 @@ export default function Home() {
           >
             Fazer Checklist
           </button>
+          <button
+            className={`nav-button ${view === 'finalizar' ? 'active' : ''}`}
+            onClick={() => {
+              setView('finalizar')
+              setEditRecord(null)
+            }}
+          >
+            Finalizar Data
+          </button>
+          <button
+            className={`nav-button ${view === 'ver' ? 'active' : ''}`}
+            onClick={() => {
+              setView('ver')
+              setEditRecord(null)
+            }}
+          >
+            Ver Registros de Checklists
+          </button>
         </div>
       </div>
 
-      {view === 'ver' && <VerRegistros onEdit={handleEdit} />}
       {view === 'fazer' && (
         <FazerChecklist
           editRecord={editRecord}
@@ -78,6 +87,8 @@ export default function Home() {
           onSuccess={handleSuccess}
         />
       )}
+      {view === 'finalizar' && <FinalizarData />}
+      {view === 'ver' && <VerRegistros onEdit={handleEdit} />}
     </div>
   )
 }

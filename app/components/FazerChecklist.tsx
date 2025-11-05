@@ -155,6 +155,26 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [dataFinalizada, setDataFinalizada] = useState(false)
+
+  // Verificar se a data está finalizada
+  const verificarDataFinalizada = async (dataParaVerificar: string) => {
+    if (!dataParaVerificar || !/^\d{4}-\d{2}-\d{2}$/.test(dataParaVerificar)) {
+      return false
+    }
+
+    try {
+      const { data: dataFinalizada, error } = await supabase
+        .from('datas_finalizadas')
+        .select('data')
+        .eq('data', dataParaVerificar)
+        .single()
+
+      return !error && dataFinalizada !== null
+    } catch (error) {
+      return false
+    }
+  }
 
   // Preencher formulário quando estiver editando
   useEffect(() => {
@@ -164,8 +184,15 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       const dataDoBanco = editRecord.data
       if (/^\d{4}-\d{2}-\d{2}$/.test(dataDoBanco)) {
         setData(dataDoBanco)
+        verificarDataFinalizada(dataDoBanco).then(finalizada => {
+          setDataFinalizada(finalizada)
+        })
       } else {
-        setData(normalizarData(dataDoBanco))
+        const dataNormalizada = normalizarData(dataDoBanco)
+        setData(dataNormalizada)
+        verificarDataFinalizada(dataNormalizada).then(finalizada => {
+          setDataFinalizada(finalizada)
+        })
       }
       setPrefixed(editRecord.prefixed as 'spin' | 's10')
       setCodigoViatura(editRecord.codigo_viatura)
@@ -184,6 +211,17 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
     }
     // Não resetar a data quando não há editRecord, para permitir que o usuário selecione a data desejada
   }, [editRecord])
+
+  // Verificar se a data está finalizada quando o usuário seleciona uma data
+  useEffect(() => {
+    if (data && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
+      verificarDataFinalizada(data).then(finalizada => {
+        setDataFinalizada(finalizada)
+      })
+    } else {
+      setDataFinalizada(false)
+    }
+  }, [data])
 
   // Limpar código da viatura quando o prefixo mudar
   const handlePrefixedChange = (newPrefixed: 'spin' | 's10') => {
@@ -210,6 +248,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       // Validar que a data foi preenchida
       if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
         throw new Error('Por favor, selecione uma data válida')
+      }
+      
+      // Verificar se a data está finalizada
+      const dataEstaFinalizada = await verificarDataFinalizada(data.trim())
+      if (dataEstaFinalizada) {
+        throw new Error('Esta data foi finalizada e não pode ser editada ou ter novos registros criados.')
       }
       
       // Usar diretamente o valor do input (já está no formato YYYY-MM-DD)
@@ -305,6 +349,11 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{editRecord ? 'Checklist atualizado com sucesso!' : 'Checklist registrado com sucesso!'}</div>}
+      {dataFinalizada && (
+        <div className="error" style={{ backgroundColor: '#ffebee', color: '#c62828', border: '2px solid #c62828' }}>
+          ⚠️ ATENÇÃO: Esta data foi finalizada e não pode ser editada ou ter novos registros criados.
+        </div>
+      )}
 
       {/* Brazões */}
       <div className="form-section">
@@ -347,6 +396,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
               }
             }}
             required
+            disabled={dataFinalizada}
           />
         </div>
       </div>
@@ -609,7 +659,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
 
       {/* Botão Submit */}
       {camposHabilitados && (
-        <button type="submit" className="submit-button" disabled={loading}>
+        <button type="submit" className="submit-button" disabled={loading || dataFinalizada}>
           {loading ? (editRecord ? 'Atualizando...' : 'Registrando...') : (editRecord ? 'Atualizar Checklist' : 'Registrar Checklist')}
         </button>
       )}
