@@ -51,6 +51,7 @@ interface ChecklistRecord {
   opm: string
   nome: string
   created_at: string
+  finalizado?: boolean
 }
 
 interface VerRegistrosProps {

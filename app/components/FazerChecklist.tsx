@@ -128,6 +128,7 @@ interface ChecklistRecord {
   ci: string
   opm: string
   nome: string
+  finalizado?: boolean
 }
 
 interface FazerChecklistProps {
@@ -157,20 +158,21 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
   const [success, setSuccess] = useState(false)
   const [dataFinalizada, setDataFinalizada] = useState(false)
 
-  // Verificar se a data está finalizada
-  const verificarDataFinalizada = async (dataParaVerificar: string) => {
-    if (!dataParaVerificar || !/^\d{4}-\d{2}-\d{2}$/.test(dataParaVerificar)) {
+  // Verificar se o registro está finalizado
+  const verificarRegistroFinalizado = async () => {
+    if (!editRecord) {
       return false
     }
 
     try {
-      const { data: dataFinalizada, error } = await supabase
-        .from('datas_finalizadas')
-        .select('data')
-        .eq('data', dataParaVerificar)
+      const { data: registro, error } = await supabase
+        .from('checklists')
+        .select('finalizado')
+        .eq('id', editRecord.id)
         .single()
 
-      return !error && dataFinalizada !== null
+      if (error) return false
+      return registro?.finalizado === true
     } catch (error) {
       return false
     }
@@ -184,16 +186,15 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       const dataDoBanco = editRecord.data
       if (/^\d{4}-\d{2}-\d{2}$/.test(dataDoBanco)) {
         setData(dataDoBanco)
-        verificarDataFinalizada(dataDoBanco).then(finalizada => {
-          setDataFinalizada(finalizada)
-        })
       } else {
-        const dataNormalizada = normalizarData(dataDoBanco)
-        setData(dataNormalizada)
-        verificarDataFinalizada(dataNormalizada).then(finalizada => {
-          setDataFinalizada(finalizada)
-        })
+        setData(normalizarData(dataDoBanco))
       }
+      
+      // Verificar se o registro está finalizado
+      verificarRegistroFinalizado().then(finalizado => {
+        setDataFinalizada(finalizado)
+      })
+      
       setPrefixed(editRecord.prefixed as 'spin' | 's10')
       setCodigoViatura(editRecord.codigo_viatura)
       setServico(editRecord.servico as 'Ordinario' | 'SEG')
@@ -208,20 +209,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       setCi(editRecord.ci)
       setOpm(editRecord.opm)
       setNome(editRecord.nome || '')
+    } else {
+      // Quando não está editando, não há registro finalizado
+      setDataFinalizada(false)
     }
     // Não resetar a data quando não há editRecord, para permitir que o usuário selecione a data desejada
   }, [editRecord])
-
-  // Verificar se a data está finalizada quando o usuário seleciona uma data
-  useEffect(() => {
-    if (data && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
-      verificarDataFinalizada(data).then(finalizada => {
-        setDataFinalizada(finalizada)
-      })
-    } else {
-      setDataFinalizada(false)
-    }
-  }, [data])
 
   // Limpar código da viatura quando o prefixo mudar
   const handlePrefixedChange = (newPrefixed: 'spin' | 's10') => {
@@ -250,10 +243,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
         throw new Error('Por favor, selecione uma data válida')
       }
       
-      // Verificar se a data está finalizada
-      const dataEstaFinalizada = await verificarDataFinalizada(data.trim())
-      if (dataEstaFinalizada) {
-        throw new Error('Esta data foi finalizada e não pode ser editada ou ter novos registros criados.')
+      // Se estiver editando, verificar se o registro está finalizado
+      if (editRecord) {
+        const registroEstaFinalizado = await verificarRegistroFinalizado()
+        if (registroEstaFinalizado) {
+          throw new Error('Este checklist foi finalizado e não pode ser editado.')
+        }
       }
       
       // Usar diretamente o valor do input (já está no formato YYYY-MM-DD)
@@ -351,7 +346,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess }: Faze
       {success && <div className="success">{editRecord ? 'Checklist atualizado com sucesso!' : 'Checklist registrado com sucesso!'}</div>}
       {dataFinalizada && (
         <div className="error" style={{ backgroundColor: '#ffebee', color: '#c62828', border: '2px solid #c62828' }}>
-          ⚠️ ATENÇÃO: Esta data foi finalizada e não pode ser editada ou ter novos registros criados.
+          ⚠️ ATENÇÃO: Este checklist foi finalizado e não pode ser editado.
         </div>
       )}
 

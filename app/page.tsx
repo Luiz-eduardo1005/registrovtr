@@ -23,6 +23,7 @@ interface ChecklistRecord {
   opm: string
   nome: string
   created_at: string
+  finalizado?: boolean
 }
 
 export default function Home() {
@@ -66,7 +67,7 @@ export default function Home() {
               setEditRecord(null)
             }}
           >
-            Finalizar Data
+            Finalizar Checklist
           </button>
           <button
             className={`nav-button ${view === 'ver' ? 'active' : ''}`}
