@@ -293,6 +293,35 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           .eq('id', editRecord.id)
 
         if (updateError) throw updateError
+
+        // Se estiver em modo finalizar, recarregar o registro atualizado
+        if (isFinalizarMode) {
+          const { data: registroAtualizado, error: errorBusca } = await supabase
+            .from('checklists')
+            .select('*')
+            .eq('id', editRecord.id)
+            .single()
+
+          if (!errorBusca && registroAtualizado) {
+            // Atualizar os estados com os dados recarregados
+            setData(registroAtualizado.data)
+            setPrefixed(registroAtualizado.prefixed as 'spin' | 's10')
+            setCodigoViatura(registroAtualizado.codigo_viatura)
+            setServico(registroAtualizado.servico as 'Ordinario' | 'SEG')
+            setTurno(registroAtualizado.turno as 'Primeiro' | 'Segundo')
+            setKmInicial(registroAtualizado.km_inicial.toString())
+            setKmFinal(registroAtualizado.km_final.toString())
+            setAbastecimento(registroAtualizado.abastecimento.toString())
+            setCombustivelInicial(numeroParaOpcao(registroAtualizado.combustivel_inicial))
+            setCombustivelFinal(numeroParaOpcao(registroAtualizado.combustivel_final))
+            setAvarias(registroAtualizado.avarias || {})
+            setObservacoes(registroAtualizado.observacoes || '')
+            setCi(registroAtualizado.ci)
+            setOpm(registroAtualizado.opm)
+            setNome(registroAtualizado.nome || '')
+            setTelefone(registroAtualizado.telefone || '')
+          }
+        }
       } else {
         // Criar novo registro
         const { error: insertError } = await supabase
@@ -326,7 +355,10 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
       setTimeout(() => {
         setSuccess(false)
-        if (onSuccess) onSuccess()
+        // Se estiver em modo finalizar, não chamar onSuccess para manter o editRecord
+        if (!isFinalizarMode && onSuccess) {
+          onSuccess()
+        }
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar checklist')

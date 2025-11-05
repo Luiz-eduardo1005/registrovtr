@@ -44,7 +44,10 @@ export default function Home() {
   }
 
   const handleSuccess = () => {
-    setEditRecord(null)
+    // Não limpar editRecord se estiver vindo de finalizar
+    if (previousView !== 'finalizar') {
+      setEditRecord(null)
+    }
     // Opcional: voltar para ver registros após salvar
     // setView('ver')
   }

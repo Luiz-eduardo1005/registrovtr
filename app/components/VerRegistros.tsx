@@ -113,6 +113,25 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
       setLoading(true)
       setError(null)
 
+      // Primeiro, verificar e finalizar automaticamente registros com mais de 16 horas
+      const agora = new Date()
+      const limite16Horas = new Date(agora.getTime() - 16 * 60 * 60 * 1000) // 16 horas atrás
+
+      // Buscar todos os registros não finalizados criados há mais de 16 horas
+      const { data: registrosParaFinalizar, error: errorBusca } = await supabase
+        .from('checklists')
+        .select('id')
+        .or('finalizado.is.null,finalizado.eq.false')
+        .lt('created_at', limite16Horas.toISOString())
+
+      if (!errorBusca && registrosParaFinalizar && registrosParaFinalizar.length > 0) {
+        const idsParaFinalizar = registrosParaFinalizar.map(r => r.id)
+        await supabase
+          .from('checklists')
+          .update({ finalizado: true })
+          .in('id', idsParaFinalizar)
+      }
+
       let query = supabase
         .from('checklists')
         .select('*')

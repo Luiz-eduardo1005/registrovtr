@@ -101,6 +101,25 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
       setLoading(true)
       setError(null)
 
+      // Primeiro, verificar e finalizar automaticamente registros com mais de 16 horas
+      const agora = new Date()
+      const limite16Horas = new Date(agora.getTime() - 16 * 60 * 60 * 1000) // 16 horas atrás
+
+      // Buscar todos os registros não finalizados criados há mais de 16 horas
+      const { data: registrosParaFinalizar, error: errorBusca } = await supabase
+        .from('checklists')
+        .select('id')
+        .or('finalizado.is.null,finalizado.eq.false')
+        .lt('created_at', limite16Horas.toISOString())
+
+      if (!errorBusca && registrosParaFinalizar && registrosParaFinalizar.length > 0) {
+        const idsParaFinalizar = registrosParaFinalizar.map(r => r.id)
+        await supabase
+          .from('checklists')
+          .update({ finalizado: true })
+          .in('id', idsParaFinalizar)
+      }
+
       let query = supabase
         .from('checklists')
         .select('*')
@@ -147,6 +166,17 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
   useEffect(() => {
     carregarRegistros()
   }, [filtroData, filtroModelo, filtroPrefixo, filtroTurno, filtroServico])
+
+  // Abrir automaticamente se houver apenas um registro após filtrar
+  useEffect(() => {
+    // Verificar se todos os filtros estão preenchidos e há apenas um registro
+    const todosFiltrosPreenchidos = filtroData && filtroModelo && filtroPrefixo && filtroTurno && filtroServico
+    
+    if (todosFiltrosPreenchidos && records.length === 1 && onEdit && !selectedRecord) {
+      // Abrir automaticamente o único registro encontrado
+      onEdit(records[0])
+    }
+  }, [records, filtroData, filtroModelo, filtroPrefixo, filtroTurno, filtroServico, onEdit, selectedRecord])
 
   const handleToggleSelect = (id: string) => {
     const newSelectedIds = new Set(selectedIds)
