@@ -117,7 +117,7 @@ interface ChecklistRecord {
   prefixed: 'spin' | 's10'
   codigo_viatura: string
   servico: 'Ordinario' | 'SEG'
-  turno: 'Primeiro' | 'Segundo'
+  turno: 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)'
   km_inicial: number
   km_final: number
   abastecimento: number
@@ -145,7 +145,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const [prefixed, setPrefixed] = useState<'spin' | 's10' | ''>('')
   const [codigoViatura, setCodigoViatura] = useState('')
   const [servico, setServico] = useState<'Ordinario' | 'SEG' | ''>('')
-  const [turno, setTurno] = useState<'Primeiro' | 'Segundo' | ''>('')
+  const [turno, setTurno] = useState<'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)' | ''>('')
   const [kmInicial, setKmInicial] = useState('')
   const [kmFinal, setKmFinal] = useState('')
   const [abastecimento, setAbastecimento] = useState('')
@@ -203,7 +203,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       setPrefixed(editRecord.prefixed as 'spin' | 's10')
       setCodigoViatura(editRecord.codigo_viatura)
       setServico(editRecord.servico as 'Ordinario' | 'SEG')
-      setTurno(editRecord.turno as 'Primeiro' | 'Segundo')
+      setTurno(editRecord.turno as 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)')
       setKmInicial(editRecord.km_inicial.toString())
       setKmFinal(editRecord.km_final.toString())
       setAbastecimento(editRecord.abastecimento.toString())
@@ -230,6 +230,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       setCodigoViatura('')
     }
     setPrefixed(newPrefixed)
+  }
+
+  // Limpar turno quando o serviço mudar, se necessário
+  const handleServicoChange = (newServico: 'Ordinario' | 'SEG') => {
+    setServico(newServico)
+    // Limpar o turno quando o serviço mudar, porque os turnos são diferentes para cada serviço
+    setTurno('')
   }
 
   const codigosDisponiveis = prefixed === 'spin' ? CODIGOS_SPIN : prefixed === 's10' ? CODIGOS_S10 : []
@@ -309,7 +316,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             setPrefixed(registroAtualizado.prefixed as 'spin' | 's10')
             setCodigoViatura(registroAtualizado.codigo_viatura)
             setServico(registroAtualizado.servico as 'Ordinario' | 'SEG')
-            setTurno(registroAtualizado.turno as 'Primeiro' | 'Segundo')
+            setTurno(registroAtualizado.turno as 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)')
             setKmInicial(registroAtualizado.km_inicial.toString())
             setKmFinal(registroAtualizado.km_final.toString())
             setAbastecimento(registroAtualizado.abastecimento.toString())
@@ -615,8 +622,9 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 name="servico"
                 value="Ordinario"
                 checked={servico === 'Ordinario'}
-                onChange={(e) => setServico(e.target.value as 'Ordinario')}
+                onChange={(e) => handleServicoChange(e.target.value as 'Ordinario')}
                 required
+                disabled={dataFinalizada}
               />
               <label>Ordinário</label>
             </div>
@@ -626,8 +634,9 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 name="servico"
                 value="SEG"
                 checked={servico === 'SEG'}
-                onChange={(e) => setServico(e.target.value as 'SEG')}
+                onChange={(e) => handleServicoChange(e.target.value as 'SEG')}
                 required
+                disabled={dataFinalizada}
               />
               <label>SEG</label>
             </div>
@@ -636,35 +645,68 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       </div>
 
       {/* Turno */}
-      <div className="form-section">
-        <div className="form-group">
-          <label>Turno:</label>
-          <div className="radio-group">
-            <div className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                name="turno"
-                value="Primeiro"
-                checked={turno === 'Primeiro'}
-                onChange={(e) => setTurno(e.target.value as 'Primeiro')}
-                required
-              />
-              <label>Primeiro Turno</label>
-            </div>
-            <div className={`radio-option ${turno === 'Segundo' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                name="turno"
-                value="Segundo"
-                checked={turno === 'Segundo'}
-                onChange={(e) => setTurno(e.target.value as 'Segundo')}
-                required
-              />
-              <label>Segundo Turno</label>
-            </div>
+      {servico && (
+        <div className="form-section">
+          <div className="form-group">
+            <label>Turno:</label>
+            {servico === 'Ordinario' ? (
+              <div className="radio-group">
+                <div className={`radio-option ${turno === '12Hs' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="turno"
+                    value="12Hs"
+                    checked={turno === '12Hs'}
+                    onChange={(e) => setTurno(e.target.value as '12Hs')}
+                    required
+                    disabled={dataFinalizada}
+                  />
+                  <label>12Hs</label>
+                </div>
+                <div className={`radio-option ${turno === '8Hs (2x2)' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="turno"
+                    value="8Hs (2x2)"
+                    checked={turno === '8Hs (2x2)'}
+                    onChange={(e) => setTurno(e.target.value as '8Hs (2x2)')}
+                    required
+                    disabled={dataFinalizada}
+                  />
+                  <label>8Hs (2x2)</label>
+                </div>
+              </div>
+            ) : (
+              <div className="radio-group">
+                <div className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="turno"
+                    value="Primeiro"
+                    checked={turno === 'Primeiro'}
+                    onChange={(e) => setTurno(e.target.value as 'Primeiro')}
+                    required
+                    disabled={dataFinalizada}
+                  />
+                  <label>Primeiro Turno</label>
+                </div>
+                <div className={`radio-option ${turno === 'Segundo' ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="turno"
+                    value="Segundo"
+                    checked={turno === 'Segundo'}
+                    onChange={(e) => setTurno(e.target.value as 'Segundo')}
+                    required
+                    disabled={dataFinalizada}
+                  />
+                  <label>Segundo Turno</label>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       {/* KM */}
       {camposHabilitados && (
