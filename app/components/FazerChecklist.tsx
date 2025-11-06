@@ -246,7 +246,17 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       setAbastecimento(editRecord.abastecimento.toString())
       setCombustivelInicial(numeroParaOpcao(editRecord.combustivel_inicial))
       setCombustivelFinal(numeroParaOpcao(editRecord.combustivel_final))
-      setAvarias(editRecord.avarias || {})
+      
+      // Garantir que todos os itens tenham tipo definido (inicializar faltantes como "OK")
+      const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
+      const avariasCompletas = { ...(editRecord.avarias || {}) }
+      todosItens.forEach(item => {
+        if (!avariasCompletas[item] || !avariasCompletas[item].tipo) {
+          avariasCompletas[item] = { tipo: 'OK', observacao: '' }
+        }
+      })
+      setAvarias(avariasCompletas)
+      
       setObservacoes(editRecord.observacoes || '')
       setCi(editRecord.ci)
       setOpm(editRecord.opm)
@@ -255,6 +265,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     } else {
       // Quando não está editando, não há registro finalizado
       setDataFinalizada(false)
+      // Inicializar avarias com todos os itens como "OK"
+      const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
+      const avariasIniciais: Record<string, { tipo: string; observacao: string }> = {}
+      todosItens.forEach(item => {
+        avariasIniciais[item] = { tipo: 'OK', observacao: '' }
+      })
+      setAvarias(avariasIniciais)
     }
     // Não resetar a data quando não há editRecord, para permitir que o usuário selecione a data desejada
   }, [editRecord])
@@ -295,22 +312,39 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
   // Calcular progresso do formulário
   const calcularProgresso = (): number => {
-    const camposObrigatorios = [
+    // Campos obrigatórios básicos (sempre visíveis)
+    const camposBasicos = [
       data,
       prefixed,
       codigoViatura,
       servico,
       servico === 'Ordinario' ? tipoTurno : true,
-      turno,
-      camposHabilitados ? kmInicial : true,
-      camposHabilitados ? combustivelInicial : true,
-      camposHabilitados ? nome : true,
-      camposHabilitados ? ci : true,
-      camposHabilitados ? opm : true
+      turno
     ]
     
-    const preenchidos = camposObrigatorios.filter(campo => campo === true || (typeof campo === 'string' && campo.trim() !== '')).length
-    const total = camposObrigatorios.length
+    // Campos obrigatórios que só aparecem quando turno está selecionado
+    const camposCondicionais = camposHabilitados ? [
+      kmInicial,
+      combustivelInicial,
+      nome,
+      ci,
+      opm,
+      telefone
+    ] : []
+    
+    // Contar campos básicos preenchidos
+    const basicosPreenchidos = camposBasicos.filter(campo => campo === true || (typeof campo === 'string' && campo.trim() !== '')).length
+    
+    // Contar campos condicionais preenchidos
+    const condicionaisPreenchidos = camposCondicionais.filter(campo => typeof campo === 'string' && campo.trim() !== '').length
+    
+    // Total de campos obrigatórios (básicos + condicionais se habilitados)
+    const total = camposBasicos.length + camposCondicionais.length
+    
+    // Total preenchidos
+    const preenchidos = basicosPreenchidos + condicionaisPreenchidos
+    
+    if (total === 0) return 0
     return Math.round((preenchidos / total) * 100)
   }
 
@@ -359,6 +393,25 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         if (!isNaN(inicial) && !isNaN(final) && final < inicial) {
           throw new Error('KM Final não pode ser menor que KM Inicial')
         }
+      }
+
+      // Validar telefone obrigatório
+      if (!telefone || telefone.trim() === '') {
+        throw new Error('Por favor, preencha o telefone de contato')
+      }
+
+      // Validar que todos os itens da tabela de avarias tenham tipo selecionado
+      // Nota: "OK" é um tipo válido, então todos os itens devem ter um tipo (pode ser "OK" ou um tipo de avaria)
+      const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
+      const itensSemTipo = todosItens.filter(item => {
+        const avaria = avarias[item]
+        // Verifica se não tem avaria ou se o tipo está vazio/null
+        // "OK" é válido, então só rejeita se não tiver tipo ou estiver vazio
+        return !avaria || !avaria.tipo || avaria.tipo.trim() === ''
+      })
+      
+      if (itensSemTipo.length > 0) {
+        throw new Error('Por favor, selecione o tipo de avaria para todos os itens da tabela de avarias')
       }
       
       // Se estiver editando, verificar se o registro está finalizado
@@ -448,7 +501,17 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             setAbastecimento(registroAtualizado.abastecimento.toString())
             setCombustivelInicial(numeroParaOpcao(registroAtualizado.combustivel_inicial))
             setCombustivelFinal(numeroParaOpcao(registroAtualizado.combustivel_final))
-            setAvarias(registroAtualizado.avarias || {})
+            
+            // Garantir que todos os itens tenham tipo definido (inicializar faltantes como "OK")
+            const todosItensAtualizado = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
+            const avariasCompletasAtualizado = { ...(registroAtualizado.avarias || {}) }
+            todosItensAtualizado.forEach(item => {
+              if (!avariasCompletasAtualizado[item] || !avariasCompletasAtualizado[item].tipo) {
+                avariasCompletasAtualizado[item] = { tipo: 'OK', observacao: '' }
+              }
+            })
+            setAvarias(avariasCompletasAtualizado)
+            
             setObservacoes(registroAtualizado.observacoes || '')
             setCi(registroAtualizado.ci)
             setOpm(registroAtualizado.opm)
@@ -481,7 +544,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         setAbastecimento('')
         setCombustivelInicial('')
         setCombustivelFinal('')
-        setAvarias({})
+        // Reinicializar avarias com todos os itens como "OK"
+        const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
+        const avariasIniciais: Record<string, { tipo: string; observacao: string }> = {}
+        todosItens.forEach(item => {
+          avariasIniciais[item] = { tipo: 'OK', observacao: '' }
+        })
+        setAvarias(avariasIniciais)
         setObservacoes('')
         setCi('')
         setOpm('')
@@ -904,14 +973,22 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 onChange={(e) => setKmFinal(e.target.value)}
                 style={{ borderColor: kmError ? '#c33' : undefined }}
               />
-              {kmError && <div style={{ color: '#c33', fontSize: '0.875rem', marginTop: '4px' }}>{kmError}</div>}
-              {kmRodados !== null && !kmError && (
-                <div style={{ color: '#2c7700', fontSize: '0.875rem', marginTop: '4px', fontWeight: '600' }}>
-                  KM Rodados: {kmRodados.toLocaleString('pt-BR')} km
+            </div>
+          </div>
+          {/* Cálculo de KM Rodados */}
+          {(kmRodados !== null || kmError) && (
+            <div style={{ marginTop: '15px', padding: '12px', backgroundColor: kmError ? '#ffebee' : '#e8f5e9', borderRadius: '6px', border: `2px solid ${kmError ? '#c33' : '#2c7700'}` }}>
+              {kmError ? (
+                <div style={{ color: '#c33', fontSize: '0.95rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ⚠️ {kmError}
+                </div>
+              ) : (
+                <div style={{ color: '#2c7700', fontSize: '1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  📊 KM Rodados: <span style={{ fontSize: '1.2rem' }}>{kmRodados?.toLocaleString('pt-BR')}</span> km
                 </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -1031,12 +1108,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             </div>
           </div>
           <div className="form-group">
-            <label>Telefone de Contato:</label>
+            <label>Telefone de Contato: <span className="required-field">*</span></label>
             <input
               type="text"
               value={telefone}
               onChange={(e) => setTelefone(e.target.value)}
               placeholder="(00) 00000-0000"
+              required
             />
           </div>
         </div>

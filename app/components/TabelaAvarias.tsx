@@ -18,11 +18,21 @@ export default function TabelaAvarias({
   const handleTipoChange = (item: string, tipo: string) => {
     const newAvarias = { ...avarias }
     
-    if (tipo === 'OK' || tipo === '') {
-      // Se estiver OK ou vazio, remove o item
-      delete newAvarias[item]
+    // Sempre deve ter um tipo selecionado (não pode ficar vazio)
+    if (tipo === '' || !tipo) {
+      // Se tentar deixar vazio, mantém como OK
+      newAvarias[item] = {
+        tipo: 'OK',
+        observacao: newAvarias[item]?.observacao || ''
+      }
+    } else if (tipo === 'OK') {
+      // Se selecionar OK, mantém o item mas com tipo OK
+      newAvarias[item] = {
+        tipo: 'OK',
+        observacao: ''
+      }
     } else {
-      // Se não estiver OK, adiciona ou atualiza
+      // Se selecionar um tipo de avaria, adiciona ou atualiza
       newAvarias[item] = {
         tipo,
         observacao: newAvarias[item]?.observacao || ''
@@ -49,7 +59,7 @@ export default function TabelaAvarias({
         <thead>
           <tr>
             <th>Item</th>
-            <th>Tipo de Avaria</th>
+            <th>Tipo de Avaria <span className="required-field">*</span></th>
             <th>Observação</th>
           </tr>
         </thead>
@@ -66,6 +76,7 @@ export default function TabelaAvarias({
                     value={avariaAtual?.tipo || 'OK'}
                     onChange={(e) => handleTipoChange(item, e.target.value)}
                     disabled={readOnly}
+                    required
                     style={readOnly ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
                   >
                     <option value="OK">OK</option>
