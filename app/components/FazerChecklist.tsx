@@ -388,7 +388,45 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault()
+      
+      // Validar campos required do HTML5 e mostrar mensagens em português
+      const form = e.currentTarget as HTMLFormElement
+      if (form) {
+        // Primeiro, limpar todas as validações customizadas
+        const allFields = form.querySelectorAll('select, input, textarea')
+        allFields.forEach((field) => {
+          const htmlField = field as HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement
+          htmlField.setCustomValidity('')
+        })
+        
+        // Validar campos required
+        const requiredFields = form.querySelectorAll('select[required], input[required]')
+        let primeiroCampoInvalido: HTMLSelectElement | HTMLInputElement | null = null
+        
+        requiredFields.forEach((field) => {
+          const selectField = field as HTMLSelectElement | HTMLInputElement
+          if (!selectField.value || selectField.value.trim() === '') {
+            if (selectField.tagName === 'SELECT') {
+              selectField.setCustomValidity('Por favor, selecione uma opção')
+            } else {
+              selectField.setCustomValidity('Por favor, preencha este campo')
+            }
+            if (!primeiroCampoInvalido) {
+              primeiroCampoInvalido = selectField as HTMLSelectElement | HTMLInputElement
+            }
+          } else {
+            selectField.setCustomValidity('')
+          }
+        })
+        
+        // Verificar se o formulário é válido
+        if (!form.checkValidity()) {
+          form.reportValidity()
+          return
+        }
+      }
     }
+    
     setLoading(true)
     setError(null)
     setSuccess(false)
@@ -696,7 +734,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 10000,
-              animation: 'fadeIn 0.3s ease-in'
+              opacity: 1,
+              transform: 'none'
             }} onClick={() => {
               setSuccess(false)
               setSuccessMessage('')

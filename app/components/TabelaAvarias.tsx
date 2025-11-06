@@ -76,6 +76,16 @@ export default function TabelaAvarias({
                     onChange={(e) => handleTipoChange(item, e.target.value)}
                     disabled={readOnly}
                     required
+                    title="Por favor, selecione o tipo de avaria"
+                    onInvalid={(e) => {
+                      e.preventDefault()
+                      const target = e.target as HTMLSelectElement
+                      target.setCustomValidity('Por favor, selecione o tipo de avaria para este item')
+                    }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLSelectElement
+                      target.setCustomValidity('')
+                    }}
                     style={readOnly ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
                   >
                     <option value="">Selecione...</option>
