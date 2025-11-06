@@ -11,7 +11,7 @@ interface ChecklistRecord {
   prefixed: 'spin' | 's10'
   codigo_viatura: string
   servico: 'Ordinario' | 'SEG'
-  turno: 'Primeiro' | 'Segundo'
+  turno: 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)'
   km_inicial: number
   km_final: number
   abastecimento: number

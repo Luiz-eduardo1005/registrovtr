@@ -48,7 +48,7 @@ interface ChecklistRecord {
   prefixed: 'spin' | 's10'
   codigo_viatura: string
   servico: 'Ordinario' | 'SEG'
-  turno: 'Primeiro' | 'Segundo'
+  turno: 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)'
   km_inicial: number
   km_final: number
   abastecimento: number
@@ -89,7 +89,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
   const [filtroModelo, setFiltroModelo] = useState<'spin' | 's10' | ''>('')
   const [filtroPrefixo, setFiltroPrefixo] = useState('')
   const [filtroAvaria, setFiltroAvaria] = useState('')
-  const [filtroTurno, setFiltroTurno] = useState<'Primeiro' | 'Segundo' | ''>('')
+  const [filtroTurno, setFiltroTurno] = useState<'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)' | ''>('')
   const [filtroServico, setFiltroServico] = useState<'Ordinario' | 'SEG' | ''>('')
   const [selectedRecord, setSelectedRecord] = useState<ChecklistRecord | null>(null)
 
@@ -273,11 +273,13 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
           <label>Filtrar por Turno:</label>
           <select
             value={filtroTurno}
-            onChange={(e) => setFiltroTurno(e.target.value as 'Primeiro' | 'Segundo' | '')}
+            onChange={(e) => setFiltroTurno(e.target.value as 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)' | '')}
           >
             <option value="">Todos</option>
             <option value="Primeiro">Primeiro Turno</option>
             <option value="Segundo">Segundo Turno</option>
+            <option value="12Hs">12Hs</option>
+            <option value="8Hs (2x2)">8Hs (2x2)</option>
           </select>
         </div>
         <div className="form-group">

@@ -44,7 +44,7 @@ interface ChecklistRecord {
   prefixed: 'spin' | 's10'
   codigo_viatura: string
   servico: 'Ordinario' | 'SEG'
-  turno: 'Primeiro' | 'Segundo'
+  turno: 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)'
   km_inicial: number
   km_final: number
   abastecimento: number
@@ -229,30 +229,57 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
       <div className="form-section">
         <div className="form-group">
           <label>Turno:</label>
-          <div className="radio-group">
-            <div className={`radio-option ${record.turno === 'Primeiro' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                name="turno"
-                value="Primeiro"
-                checked={record.turno === 'Primeiro'}
-                readOnly
-                disabled
-              />
-              <label>Primeiro Turno</label>
+          {record.servico === 'Ordinario' ? (
+            <div className="radio-group">
+              <div className={`radio-option ${record.turno === '12Hs' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="turno"
+                  value="12Hs"
+                  checked={record.turno === '12Hs'}
+                  readOnly
+                  disabled
+                />
+                <label>12Hs</label>
+              </div>
+              <div className={`radio-option ${record.turno === '8Hs (2x2)' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="turno"
+                  value="8Hs (2x2)"
+                  checked={record.turno === '8Hs (2x2)'}
+                  readOnly
+                  disabled
+                />
+                <label>8Hs (2x2)</label>
+              </div>
             </div>
-            <div className={`radio-option ${record.turno === 'Segundo' ? 'selected' : ''}`}>
-              <input
-                type="radio"
-                name="turno"
-                value="Segundo"
-                checked={record.turno === 'Segundo'}
-                readOnly
-                disabled
-              />
-              <label>Segundo Turno</label>
+          ) : (
+            <div className="radio-group">
+              <div className={`radio-option ${record.turno === 'Primeiro' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="turno"
+                  value="Primeiro"
+                  checked={record.turno === 'Primeiro'}
+                  readOnly
+                  disabled
+                />
+                <label>Primeiro Turno</label>
+              </div>
+              <div className={`radio-option ${record.turno === 'Segundo' ? 'selected' : ''}`}>
+                <input
+                  type="radio"
+                  name="turno"
+                  value="Segundo"
+                  checked={record.turno === 'Segundo'}
+                  readOnly
+                  disabled
+                />
+                <label>Segundo Turno</label>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 
