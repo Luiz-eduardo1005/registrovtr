@@ -312,54 +312,44 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
   // Calcular progresso do formulário
   const calcularProgresso = (): number => {
-    // Se não há campos habilitados, só conta os campos básicos
-    if (!camposHabilitados) {
-      // Se servico está vazio, não conta nada (progresso 0%)
-      if (!servico) {
-        return 0
-      }
-      
-      // Construir array de campos básicos de forma dinâmica
-      const camposBasicos: (string | boolean)[] = [
-        data,
-        prefixed,
-        codigoViatura,
-        servico
-      ]
-      
-      // Adicionar tipoTurno ou marcador baseado no serviço
-      if (servico === 'Ordinario') {
-        camposBasicos.push(tipoTurno)
-      } else if (servico === 'SEG') {
-        camposBasicos.push(true) // SEG não precisa de tipoTurno
-      } else {
-        camposBasicos.push(false) // Serviço não selecionado
-      }
-      
-      camposBasicos.push(turno)
-      
-      const basicosPreenchidos = camposBasicos.filter(campo => {
-        if (campo === true) return true
-        if (campo === false) return false
-        if (typeof campo === 'string') return campo.trim() !== ''
-        return false
-      }).length
-      
-      const total = camposBasicos.length
-      
-      if (total === 0) return 0
-      return Math.round((basicosPreenchidos / total) * 100)
+    // Se servico está vazio, não conta nada (progresso 0%)
+    if (!servico) {
+      return 0
     }
     
-    // Campos obrigatórios básicos (sempre visíveis)
-    const camposBasicos = [
+    // Construir array de campos básicos de forma dinâmica
+    const camposBasicos: (string | boolean)[] = [
       data,
       prefixed,
       codigoViatura,
-      servico,
-      servico === 'Ordinario' ? tipoTurno : true,
-      turno
+      servico
     ]
+    
+    // Adicionar tipoTurno ou marcador baseado no serviço
+    if (servico === 'Ordinario') {
+      camposBasicos.push(tipoTurno)
+    } else if (servico === 'SEG') {
+      camposBasicos.push(true) // SEG não precisa de tipoTurno
+    } else {
+      camposBasicos.push(false)
+    }
+    
+    camposBasicos.push(turno)
+    
+    // Contar campos básicos preenchidos
+    const basicosPreenchidos = camposBasicos.filter(campo => {
+      if (campo === true) return true
+      if (campo === false) return false
+      if (typeof campo === 'string') return campo.trim() !== ''
+      return false
+    }).length
+    
+    // Se não há campos habilitados, só conta os campos básicos
+    if (!camposHabilitados) {
+      const total = camposBasicos.length
+      if (total === 0) return 0
+      return Math.round((basicosPreenchidos / total) * 100)
+    }
     
     // Campos obrigatórios que só aparecem quando turno está selecionado
     const camposCondicionais = [
@@ -370,13 +360,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       opm,
       telefone
     ]
-    
-    // Contar campos básicos preenchidos
-    const basicosPreenchidos = camposBasicos.filter(campo => {
-      if (campo === true) return true
-      if (typeof campo === 'string') return campo.trim() !== ''
-      return false
-    }).length
     
     // Contar campos condicionais preenchidos
     const condicionaisPreenchidos = camposCondicionais.filter(campo => typeof campo === 'string' && campo.trim() !== '').length
@@ -572,7 +555,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       }
 
       setSuccess(true)
-      setSuccessMessage('Checklist salvo com sucesso!')
+      setSuccessMessage('Checklist registrado com sucesso! Os dados foram enviados ao banco de dados do COMANDO DE POLICIAMENTO DA ÁREA SUL 1ª COMPANHIA INTERATIVA COMUNITÁRIA.')
       
       // Limpar formulário apenas se não estiver editando
       if (!editRecord) {
