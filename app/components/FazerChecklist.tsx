@@ -169,6 +169,79 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const [kmRodados, setKmRodados] = useState<number | null>(null)
   const [kmError, setKmError] = useState<string | null>(null)
 
+  const CHAVE_LOCAL_STORAGE = 'checklist_draft'
+
+  // Função para salvar dados no localStorage
+  const salvarRascunho = () => {
+    if (editRecord) return // Não salvar se estiver editando
+    
+    const rascunho = {
+      data,
+      prefixed,
+      codigoViatura,
+      servico,
+      tipoTurno,
+      turno,
+      kmInicial,
+      kmFinal,
+      abastecimento,
+      combustivelInicial,
+      combustivelFinal,
+      avarias,
+      observacoes,
+      ci,
+      opm,
+      nome,
+      telefone
+    }
+    
+    try {
+      localStorage.setItem(CHAVE_LOCAL_STORAGE, JSON.stringify(rascunho))
+    } catch (error) {
+      console.error('Erro ao salvar rascunho:', error)
+    }
+  }
+
+  // Função para carregar rascunho do localStorage
+  const carregarRascunho = () => {
+    if (editRecord) return // Não carregar se estiver editando
+    
+    try {
+      const rascunhoSalvo = localStorage.getItem(CHAVE_LOCAL_STORAGE)
+      if (rascunhoSalvo) {
+        const rascunho = JSON.parse(rascunhoSalvo)
+        setData(rascunho.data || '')
+        setPrefixed(rascunho.prefixed || '')
+        setCodigoViatura(rascunho.codigoViatura || '')
+        setServico(rascunho.servico || '')
+        setTipoTurno(rascunho.tipoTurno || '')
+        setTurno(rascunho.turno || '')
+        setKmInicial(rascunho.kmInicial || '')
+        setKmFinal(rascunho.kmFinal || '')
+        setAbastecimento(rascunho.abastecimento || '')
+        setCombustivelInicial(rascunho.combustivelInicial || '')
+        setCombustivelFinal(rascunho.combustivelFinal || '')
+        setAvarias(rascunho.avarias || {})
+        setObservacoes(rascunho.observacoes || '')
+        setCi(rascunho.ci || '')
+        setOpm(rascunho.opm || '')
+        setNome(rascunho.nome || '')
+        setTelefone(rascunho.telefone || '')
+      }
+    } catch (error) {
+      console.error('Erro ao carregar rascunho:', error)
+    }
+  }
+
+  // Função para limpar rascunho
+  const limparRascunho = () => {
+    try {
+      localStorage.removeItem(CHAVE_LOCAL_STORAGE)
+    } catch (error) {
+      console.error('Erro ao limpar rascunho:', error)
+    }
+  }
+
   // Verificar se o registro está finalizado
   const verificarRegistroFinalizado = async () => {
     if (!editRecord) {
@@ -271,6 +344,29 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     }
     // Não resetar a data quando não há editRecord, para permitir que o usuário selecione a data desejada
   }, [editRecord])
+
+  // Carregar rascunho apenas na montagem inicial (se não estiver editando)
+  useEffect(() => {
+    if (!editRecord) {
+      carregarRascunho()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Executa apenas uma vez na montagem
+
+  // Salvar rascunho automaticamente quando os dados mudarem (debounce)
+  useEffect(() => {
+    if (!editRecord) {
+      const timer = setTimeout(() => {
+        salvarRascunho()
+      }, 500) // Salva após 500ms sem mudanças
+      
+      return () => clearTimeout(timer)
+    }
+  }, [
+    data, prefixed, codigoViatura, servico, tipoTurno, turno,
+    kmInicial, kmFinal, abastecimento, combustivelInicial, combustivelFinal,
+    avarias, observacoes, ci, opm, nome, telefone, editRecord
+  ])
 
   // Limpar código da viatura quando o prefixo mudar
   const handlePrefixedChange = (newPrefixed: 'spin' | 's10') => {
@@ -616,6 +712,9 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         setSuccessMessage('Checklist registrado com sucesso! Os dados foram enviados ao banco de dados do COMANDO DE POLICIAMENTO DA ÁREA SUL 1ª COMPANHIA INTERATIVA COMUNITÁRIA.')
         setShowPersonalizedMessage(true)
         
+        // Limpar rascunho após registrar com sucesso
+        limparRascunho()
+        
         // Limpar formulário apenas se não estiver editando
         setData('')
         setPrefixed('')
@@ -635,6 +734,9 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         setOpm('')
         setNome('')
         setTelefone('')
+        
+        // Limpar rascunho também
+        limparRascunho()
       }
 
       // Não fechar automaticamente - usuário fecha manualmente
