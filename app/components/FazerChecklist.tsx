@@ -162,6 +162,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
+  const [showPersonalizedMessage, setShowPersonalizedMessage] = useState(false)
   const [dataFinalizada, setDataFinalizada] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showFinalizarModal, setShowFinalizarModal] = useState(false)
@@ -530,6 +531,16 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             setNome(registroAtualizado.nome || '')
             setTelefone(registroAtualizado.telefone || '')
           }
+        } else {
+          // Se não estiver em modo finalizar, mostrar mensagem de sucesso simples
+          setSuccess(true)
+          setSuccessMessage('Checklist atualizado com sucesso!')
+          setShowPersonalizedMessage(false)
+          
+          setTimeout(() => {
+            setSuccess(false)
+            setSuccessMessage('')
+          }, 2000)
         }
       } else {
         // Criar novo registro
@@ -538,13 +549,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           .insert(checklistData)
 
         if (insertError) throw insertError
-      }
-
-      setSuccess(true)
-      setSuccessMessage('Checklist registrado com sucesso! Os dados foram enviados ao banco de dados do COMANDO DE POLICIAMENTO DA ÁREA SUL 1ª COMPANHIA INTERATIVA COMUNITÁRIA.')
-      
-      // Limpar formulário apenas se não estiver editando
-      if (!editRecord) {
+        
+        setSuccess(true)
+        setSuccessMessage('Checklist registrado com sucesso! Os dados foram enviados ao banco de dados do COMANDO DE POLICIAMENTO DA ÁREA SUL 1ª COMPANHIA INTERATIVA COMUNITÁRIA.')
+        setShowPersonalizedMessage(true)
+        
+        // Limpar formulário apenas se não estiver editando
         setData('')
         setPrefixed('')
         setCodigoViatura('')
@@ -616,6 +626,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
       setSuccess(true)
       setSuccessMessage('Checklist finalizado com sucesso!')
+      setShowPersonalizedMessage(false)
       setShowFinalizarModal(false)
       
       setTimeout(() => {
@@ -649,6 +660,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
       setSuccess(true)
       setSuccessMessage('Checklist apagado com sucesso!')
+      setShowPersonalizedMessage(false)
       setShowDeleteModal(false)
       
       setTimeout(() => {
@@ -670,143 +682,169 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     <form onSubmit={handleSubmit}>
       {/* Mensagem de sucesso no meio da tela */}
       {success && successMessage && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10000,
-          animation: 'fadeIn 0.3s ease-in'
-        }} onClick={() => {
-          setSuccess(false)
-          setSuccessMessage('')
-          // Se estiver em modo finalizar, não chamar onSuccess para manter o editRecord
-          if (!isFinalizarMode && onSuccess) {
-            onSuccess()
-          }
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '16px',
-            padding: '40px',
-            maxWidth: '600px',
-            width: '90%',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
-            textAlign: 'center',
-            position: 'relative',
-            border: '3px solid #2c7700'
-          }} onClick={(e) => e.stopPropagation()}>
-            {/* Brasões */}
+        <>
+          {showPersonalizedMessage ? (
+            // Mensagem personalizada para registro novo
             <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
               display: 'flex',
-              justifyContent: 'center',
               alignItems: 'center',
-              gap: '30px',
-              marginBottom: '25px'
+              justifyContent: 'center',
+              zIndex: 10000,
+              animation: 'fadeIn 0.3s ease-in'
+            }} onClick={() => {
+              setSuccess(false)
+              setSuccessMessage('')
+              setShowPersonalizedMessage(false)
+              // Se estiver em modo finalizar, não chamar onSuccess para manter o editRecord
+              if (!isFinalizarMode && onSuccess) {
+                onSuccess()
+              }
             }}>
-              <img 
-                src="/img/brasao-am.png" 
-                alt="Brasão do Estado do Amazonas" 
-                style={{
-                  maxWidth: '120px',
-                  maxHeight: '120px',
-                  objectFit: 'contain'
-                }}
-              />
-              <img 
-                src="/img/brasao-pmam.png" 
-                alt="Brasão da PMAM" 
-                style={{
-                  maxWidth: '140px',
-                  maxHeight: '140px',
-                  objectFit: 'contain'
-                }}
-              />
+              <div style={{
+                backgroundColor: 'white',
+                borderRadius: '16px',
+                padding: '40px',
+                maxWidth: '600px',
+                width: '90%',
+                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+                textAlign: 'center',
+                position: 'relative',
+                border: '3px solid #2c7700'
+              }} onClick={(e) => e.stopPropagation()}>
+                {/* Brasões */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '30px',
+                  marginBottom: '25px'
+                }}>
+                  <img 
+                    src="/img/brasao-am.png" 
+                    alt="Brasão do Estado do Amazonas" 
+                    style={{
+                      maxWidth: '120px',
+                      maxHeight: '120px',
+                      objectFit: 'contain'
+                    }}
+                  />
+                  <img 
+                    src="/img/brasao-pmam.png" 
+                    alt="Brasão da PMAM" 
+                    style={{
+                      maxWidth: '140px',
+                      maxHeight: '140px',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </div>
+                
+                {/* Ícone de sucesso */}
+                <div style={{
+                  fontSize: '4rem',
+                  marginBottom: '20px',
+                  color: '#2c7700'
+                }}>
+                  ✓
+                </div>
+                
+                {/* Mensagem */}
+                <h2 style={{
+                  color: '#2c7700',
+                  fontSize: '1.8rem',
+                  fontWeight: '700',
+                  marginBottom: '15px',
+                  lineHeight: '1.3'
+                }}>
+                  Checklist Registrado com Sucesso!
+                </h2>
+                
+                <p style={{
+                  color: '#2c7700',
+                  fontSize: '1.1rem',
+                  lineHeight: '1.6',
+                  marginBottom: '10px',
+                  fontWeight: '500'
+                }}>
+                  Os dados foram enviados ao banco de dados do
+                </p>
+                
+                <p style={{
+                  color: '#2c7700',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  lineHeight: '1.5',
+                  backgroundColor: '#e8f5e9',
+                  padding: '15px',
+                  borderRadius: '8px',
+                  border: '2px solid #2c7700'
+                }}>
+                  COMANDO DE POLICIAMENTO DA ÁREA SUL<br />
+                  1ª COMPANHIA INTERATIVA COMUNITÁRIA
+                </p>
+                
+                {/* Botão de fechar */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccess(false)
+                    setSuccessMessage('')
+                    setShowPersonalizedMessage(false)
+                    // Se estiver em modo finalizar, não chamar onSuccess para manter o editRecord
+                    if (!isFinalizarMode && onSuccess) {
+                      onSuccess()
+                    }
+                  }}
+                  style={{
+                    marginTop: '25px',
+                    padding: '12px 30px',
+                    backgroundColor: '#2c7700',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#1f5a00'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2c7700'
+                  }}
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
-            
-            {/* Ícone de sucesso */}
+          ) : (
+            // Mensagem simples para finalizar/atualizar/apagar
             <div style={{
-              fontSize: '4rem',
-              marginBottom: '20px',
-              color: '#2c7700'
-            }}>
-              ✓
-            </div>
-            
-            {/* Mensagem */}
-            <h2 style={{
-              color: '#2c7700',
-              fontSize: '1.8rem',
-              fontWeight: '700',
-              marginBottom: '15px',
-              lineHeight: '1.3'
-            }}>
-              Checklist Registrado com Sucesso!
-            </h2>
-            
-            <p style={{
-              color: '#2c7700',
-              fontSize: '1.1rem',
-              lineHeight: '1.6',
-              marginBottom: '10px',
-              fontWeight: '500'
-            }}>
-              Os dados foram enviados ao banco de dados do
-            </p>
-            
-            <p style={{
-              color: '#2c7700',
-              fontSize: '1rem',
-              fontWeight: '600',
-              lineHeight: '1.5',
-              backgroundColor: '#e8f5e9',
-              padding: '15px',
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: '#2c7700',
+              color: 'white',
+              padding: '20px 40px',
               borderRadius: '8px',
-              border: '2px solid #2c7700'
+              fontSize: '1.2rem',
+              fontWeight: '600',
+              zIndex: 9999,
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+              animation: 'fadeIn 0.3s ease-in'
             }}>
-              COMANDO DE POLICIAMENTO DA ÁREA SUL<br />
-              1ª COMPANHIA INTERATIVA COMUNITÁRIA
-            </p>
-            
-            {/* Botão de fechar */}
-            <button
-              type="button"
-              onClick={() => {
-                setSuccess(false)
-                setSuccessMessage('')
-                // Se estiver em modo finalizar, não chamar onSuccess para manter o editRecord
-                if (!isFinalizarMode && onSuccess) {
-                  onSuccess()
-                }
-              }}
-              style={{
-                marginTop: '25px',
-                padding: '12px 30px',
-                backgroundColor: '#2c7700',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#1f5a00'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#2c7700'
-              }}
-            >
-              Fechar
-            </button>
-          </div>
-        </div>
+              {successMessage}
+            </div>
+          )}
+        </>
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
