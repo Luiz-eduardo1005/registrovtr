@@ -102,6 +102,11 @@ a {
   font-weight: 600;
 }
 
+.required-field {
+  color: #c33;
+  margin-left: 4px;
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -423,6 +428,37 @@ a {
 }
 
 @media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .container {
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .header h1 {
+    font-size: 1.5rem;
+  }
+
+  .nav-menu {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nav-button {
+    width: 100%;
+  }
+
+  .form-section {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .form-section h2 {
+    font-size: 1.2rem;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
   }
@@ -433,12 +469,18 @@ a {
   
   .filters {
     flex-direction: column;
+    gap: 15px;
+  }
+
+  .filters .form-group {
+    width: 100%;
   }
   
   .brazoes-container {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    padding: 15px;
   }
   
   .brazao-img {
@@ -466,6 +508,44 @@ a {
   .brazoes {
     flex-direction: column;
     align-items: center;
+  }
+
+  .radio-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .radio-option {
+    width: 100%;
+  }
+
+  .records-table {
+    font-size: 0.875rem;
+  }
+
+  .records-table th,
+  .records-table td {
+    padding: 8px;
+  }
+
+  /* Em mobile, manter apenas colunas essenciais: Modelo, Prefixo, Data, Motorista */
+  .records-table th:nth-child(5),
+  .records-table td:nth-child(5) {
+    display: none;
+  }
+
+  .avarias-table {
+    font-size: 0.8rem;
+  }
+
+  .avarias-table th,
+  .avarias-table td {
+    padding: 8px 4px;
+  }
+
+  .submit-button {
+    font-size: 1rem;
+    padding: 14px;
   }
 }
 

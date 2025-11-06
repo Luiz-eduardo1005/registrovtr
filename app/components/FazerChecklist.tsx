@@ -163,6 +163,10 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const [success, setSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string>('')
   const [dataFinalizada, setDataFinalizada] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showFinalizarModal, setShowFinalizarModal] = useState(false)
+  const [kmRodados, setKmRodados] = useState<number | null>(null)
+  const [kmError, setKmError] = useState<string | null>(null)
 
   // Verificar se o registro está finalizado
   const verificarRegistroFinalizado = async () => {
@@ -289,6 +293,51 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     return ''
   }
 
+  // Calcular progresso do formulário
+  const calcularProgresso = (): number => {
+    const camposObrigatorios = [
+      data,
+      prefixed,
+      codigoViatura,
+      servico,
+      servico === 'Ordinario' ? tipoTurno : true,
+      turno,
+      camposHabilitados ? kmInicial : true,
+      camposHabilitados ? combustivelInicial : true,
+      camposHabilitados ? nome : true,
+      camposHabilitados ? ci : true,
+      camposHabilitados ? opm : true
+    ]
+    
+    const preenchidos = camposObrigatorios.filter(campo => campo === true || (typeof campo === 'string' && campo.trim() !== '')).length
+    const total = camposObrigatorios.length
+    return Math.round((preenchidos / total) * 100)
+  }
+
+  // Calcular KM rodados e validar
+  useEffect(() => {
+    if (kmInicial && kmFinal) {
+      const inicial = parseInt(kmInicial)
+      const final = parseInt(kmFinal)
+      
+      if (!isNaN(inicial) && !isNaN(final)) {
+        if (final < inicial) {
+          setKmError('KM Final não pode ser menor que KM Inicial')
+          setKmRodados(null)
+        } else {
+          setKmError(null)
+          setKmRodados(final - inicial)
+        }
+      } else {
+        setKmError(null)
+        setKmRodados(null)
+      }
+    } else {
+      setKmError(null)
+      setKmRodados(null)
+    }
+  }, [kmInicial, kmFinal])
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
       e.preventDefault()
@@ -301,6 +350,15 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       // Validar que a data foi preenchida
       if (!data || !/^\d{4}-\d{2}-\d{2}$/.test(data)) {
         throw new Error('Por favor, selecione uma data válida')
+      }
+
+      // Validar KM antes de salvar
+      if (kmInicial && kmFinal) {
+        const inicial = parseInt(kmInicial)
+        const final = parseInt(kmFinal)
+        if (!isNaN(inicial) && !isNaN(final) && final < inicial) {
+          throw new Error('KM Final não pode ser menor que KM Inicial')
+        }
       }
       
       // Se estiver editando, verificar se o registro está finalizado
@@ -489,6 +547,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
       setSuccess(true)
       setSuccessMessage('Checklist finalizado com sucesso!')
+      setShowFinalizarModal(false)
       
       setTimeout(() => {
         setSuccess(false)
@@ -498,17 +557,14 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Erro ao finalizar checklist')
+      setShowFinalizarModal(false)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDeletar = async () => {
+  const handleDeletarConfirmado = async () => {
     if (!editRecord) return
-
-    // Confirmar antes de deletar
-    const confirmar = window.confirm('Tem certeza que deseja apagar este checklist? Esta ação não pode ser desfeita.')
-    if (!confirmar) return
 
     setLoading(true)
     setError(null)
@@ -524,6 +580,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
       setSuccess(true)
       setSuccessMessage('Checklist apagado com sucesso!')
+      setShowDeleteModal(false)
       
       setTimeout(() => {
         setSuccess(false)
@@ -534,6 +591,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'Erro ao apagar checklist')
+      setShowDeleteModal(false)
     } finally {
       setLoading(false)
     }
@@ -576,6 +634,39 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         )}
       </div>
 
+      {/* Barra de Progresso */}
+      {!editRecord && (
+        <div className="form-section" style={{ marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <label style={{ margin: 0, fontWeight: '600' }}>Progresso do Formulário:</label>
+            <span style={{ fontWeight: '600', color: '#2c7700' }}>{calcularProgresso()}%</span>
+          </div>
+          <div style={{ 
+            width: '100%', 
+            height: '24px', 
+            backgroundColor: '#e0e0e0', 
+            borderRadius: '12px', 
+            overflow: 'hidden',
+            border: '2px solid #ddd'
+          }}>
+            <div style={{ 
+              width: `${calcularProgresso()}%`, 
+              height: '100%', 
+              backgroundColor: '#2c7700', 
+              transition: 'width 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '0.75rem',
+              fontWeight: '600'
+            }}>
+              {calcularProgresso() > 15 && `${calcularProgresso()}%`}
+            </div>
+          </div>
+        </div>
+      )}
+
       {error && <div className="error">{error}</div>}
       {dataFinalizada && (
         <div className="error" style={{ backgroundColor: '#ffebee', color: '#c62828', border: '2px solid #c62828' }}>
@@ -604,7 +695,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {/* Data */}
       <div className="form-section">
         <div className="form-group">
-          <label>Data:</label>
+          <label>Data: <span className="required-field">*</span></label>
           <input
             type="date"
             value={data || ''}
@@ -632,7 +723,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {/* Prefixo */}
       <div className="form-section">
         <div className="form-group">
-          <label>Modelo da Viatura:</label>
+          <label>Modelo da Viatura: <span className="required-field">*</span></label>
           <div className="radio-group">
             <label className={`radio-option ${prefixed === 'spin' ? 'selected' : ''}`} htmlFor="prefixed-spin">
               <input
@@ -665,7 +756,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {/* Código Viatura */}
       <div className="form-section">
         <div className="form-group">
-          <label>Prefixo:</label>
+          <label>Prefixo: <span className="required-field">*</span></label>
           <select
             value={codigoViatura}
             onChange={(e) => setCodigoViatura(e.target.value)}
@@ -685,7 +776,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {/* Serviço */}
       <div className="form-section">
         <div className="form-group">
-          <label>Serviço:</label>
+          <label>Serviço: <span className="required-field">*</span></label>
           <div className="radio-group">
             <label className={`radio-option ${servico === 'Ordinario' ? 'selected' : ''}`} htmlFor="servico-ordinario">
               <input
@@ -721,7 +812,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {servico === 'Ordinario' && (
         <div className="form-section">
           <div className="form-group">
-            <label>Tipo de Turno:</label>
+            <label>Tipo de Turno: <span className="required-field">*</span></label>
             <div className="radio-group">
               <label className={`radio-option ${tipoTurno === '12Hs' ? 'selected' : ''}`} htmlFor="tipo-turno-12hs">
                 <input
@@ -758,7 +849,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {servico && (
         <div className="form-section">
           <div className="form-group">
-            <label>Turno:</label>
+            <label>Turno: <span className="required-field">*</span></label>
             <div className="radio-group">
               <label className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`} htmlFor="turno-primeiro">
                 <input
@@ -797,7 +888,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           <h2>KM</h2>
           <div className="form-row">
             <div className="form-group">
-              <label>KM Inicial:</label>
+              <label>KM Inicial: <span className="required-field">*</span></label>
               <input
                 type="number"
                 value={kmInicial}
@@ -811,7 +902,14 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 type="number"
                 value={kmFinal}
                 onChange={(e) => setKmFinal(e.target.value)}
+                style={{ borderColor: kmError ? '#c33' : undefined }}
               />
+              {kmError && <div style={{ color: '#c33', fontSize: '0.875rem', marginTop: '4px' }}>{kmError}</div>}
+              {kmRodados !== null && !kmError && (
+                <div style={{ color: '#2c7700', fontSize: '0.875rem', marginTop: '4px', fontWeight: '600' }}>
+                  KM Rodados: {kmRodados.toLocaleString('pt-BR')} km
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -822,7 +920,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         <div className="form-section">
           <h2>Combustível e Abastecimento</h2>
           <div className="form-group">
-            <label>Combustível Inicial:</label>
+            <label>Combustível Inicial: <span className="required-field">*</span></label>
             <div className="radio-group">
               {OPCOES_COMBUSTIVEL.map((opcao) => (
                 <label key={opcao.value} className={`radio-option ${combustivelInicial === opcao.value ? 'selected' : ''}`} htmlFor={`combustivel-inicial-${opcao.value}`}>
@@ -903,7 +1001,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       {camposHabilitados && (
         <div className="form-section">
           <div className="form-group">
-            <label>Motorista que está fazendo o registro:</label>
+            <label>Motorista que está fazendo o registro: <span className="required-field">*</span></label>
             <input
               type="text"
               value={nome}
@@ -914,7 +1012,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           </div>
           <div className="form-row">
             <div className="form-group">
-              <label>CI:</label>
+              <label>CI: <span className="required-field">*</span></label>
               <input
                 type="text"
                 value={ci}
@@ -923,7 +1021,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               />
             </div>
             <div className="form-group">
-              <label>OPM do Militar:</label>
+              <label>OPM do Militar: <span className="required-field">*</span></label>
               <input
                 type="text"
                 value={opm}
@@ -961,7 +1059,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               <button 
                 type="button" 
                 className="submit-button" 
-                onClick={handleFinalizar}
+                onClick={() => setShowFinalizarModal(true)}
                 disabled={loading || dataFinalizada}
                 style={{ background: '#d32f2f' }}
               >
@@ -970,7 +1068,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               <button 
                 type="button" 
                 className="submit-button" 
-                onClick={handleDeletar}
+                onClick={() => setShowDeleteModal(true)}
                 disabled={loading || dataFinalizada}
                 style={{ background: '#ff5722' }}
               >
@@ -982,6 +1080,149 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               {loading ? (editRecord ? 'Atualizando...' : 'Registrando...') : (editRecord ? 'Atualizar Checklist' : 'Registrar Checklist')}
             </button>
           )}
+        </div>
+      )}
+
+      {/* Modal de Confirmação - Deletar */}
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }} onClick={() => setShowDeleteModal(false)}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '12px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '15px', color: '#333' }}>Confirmar Exclusão</h3>
+            <p style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
+              Tem certeza que deseja apagar este checklist? Esta ação não pode ser desfeita.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowDeleteModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  border: '2px solid #ddd',
+                  borderRadius: '6px',
+                  background: 'white',
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeletarConfirmado}
+                disabled={loading}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: '#ff5722',
+                  color: 'white',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  opacity: loading ? 0.6 : 1
+                }}
+              >
+                {loading ? 'Apagando...' : 'Sim, Apagar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação - Finalizar */}
+      {showFinalizarModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10000
+        }} onClick={() => setShowFinalizarModal(false)}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '30px',
+            borderRadius: '12px',
+            maxWidth: '500px',
+            width: '90%',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '15px', color: '#333' }}>Confirmar Finalização</h3>
+            <p style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
+              Tem certeza que deseja finalizar este checklist? Após finalizado, ele não poderá mais ser editado.
+            </p>
+            {kmError && (
+              <div style={{ 
+                backgroundColor: '#ffebee', 
+                color: '#c62828', 
+                padding: '12px', 
+                borderRadius: '6px', 
+                marginBottom: '20px',
+                border: '1px solid #c62828'
+              }}>
+                ⚠️ {kmError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowFinalizarModal(false)}
+                style={{
+                  padding: '10px 20px',
+                  border: '2px solid #ddd',
+                  borderRadius: '6px',
+                  background: 'white',
+                  color: '#333',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFinalizarModal(false)
+                  handleFinalizar()
+                }}
+                disabled={loading || !!kmError}
+                style={{
+                  padding: '10px 20px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  background: kmError ? '#ccc' : '#d32f2f',
+                  color: 'white',
+                  cursor: (loading || kmError) ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  opacity: (loading || kmError) ? 0.6 : 1
+                }}
+              >
+                {loading ? 'Finalizando...' : 'Sim, Finalizar'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </form>

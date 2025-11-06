@@ -309,6 +309,7 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                 <th>Modelo</th>
                 <th>Prefixo</th>
                 <th>Data</th>
+                <th>Motorista</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -341,6 +342,11 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                   <td>
                     <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
                       {formatarData(record.data)}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.95rem' }}>
+                      {record.nome || '-'}
                     </span>
                   </td>
                   <td>
