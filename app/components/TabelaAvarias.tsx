@@ -80,7 +80,7 @@ export default function TabelaAvarias({
                     onInvalid={(e) => {
                       e.preventDefault()
                       const target = e.target as HTMLSelectElement
-                      target.setCustomValidity('Por favor, selecione o tipo de avaria para este item')
+                      target.setCustomValidity('Preencha este campo')
                     }}
                     onInput={(e) => {
                       const target = e.target as HTMLSelectElement

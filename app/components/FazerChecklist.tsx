@@ -426,7 +426,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         selectsAvarias.forEach((select) => {
           const selectField = select as HTMLSelectElement
           if (!selectField.value || selectField.value.trim() === '') {
-            selectField.setCustomValidity('Por favor, selecione o tipo de avaria para este item')
+            selectField.setCustomValidity('Preencha este campo')
             if (!primeiroSelectAvariasInvalido) {
               primeiroSelectAvariasInvalido = selectField
             }
@@ -440,14 +440,20 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           // Priorizar campos de avarias se houver
           if (primeiroSelectAvariasInvalido) {
             const campo = primeiroSelectAvariasInvalido as any
-            campo.focus()
+            // Scroll suave até o campo primeiro
             campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            campo.reportValidity()
+            // Depois focar e mostrar mensagem
+            setTimeout(() => {
+              campo.focus()
+              campo.reportValidity()
+            }, 300)
           } else if (primeiroCampoInvalido) {
             const campo = primeiroCampoInvalido as any
-            campo.focus()
             campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            campo.reportValidity()
+            setTimeout(() => {
+              campo.focus()
+              campo.reportValidity()
+            }, 300)
           } else {
             form.reportValidity()
           }
