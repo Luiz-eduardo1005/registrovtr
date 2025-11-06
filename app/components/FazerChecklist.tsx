@@ -419,9 +419,38 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           }
         })
         
+        // Validar tabela de avarias especificamente
+        const selectsAvarias = form.querySelectorAll('.avarias-table select[required]')
+        let primeiroSelectAvariasInvalido: HTMLSelectElement | null = null
+        
+        selectsAvarias.forEach((select) => {
+          const selectField = select as HTMLSelectElement
+          if (!selectField.value || selectField.value.trim() === '') {
+            selectField.setCustomValidity('Por favor, selecione o tipo de avaria para este item')
+            if (!primeiroSelectAvariasInvalido) {
+              primeiroSelectAvariasInvalido = selectField
+            }
+          } else {
+            selectField.setCustomValidity('')
+          }
+        })
+        
         // Verificar se o formulário é válido
         if (!form.checkValidity()) {
-          form.reportValidity()
+          // Priorizar campos de avarias se houver
+          if (primeiroSelectAvariasInvalido) {
+            const campo = primeiroSelectAvariasInvalido as any
+            campo.focus()
+            campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            campo.reportValidity()
+          } else if (primeiroCampoInvalido) {
+            const campo = primeiroCampoInvalido as any
+            campo.focus()
+            campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            campo.reportValidity()
+          } else {
+            form.reportValidity()
+          }
           return
         }
       }
@@ -451,19 +480,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         throw new Error('Por favor, preencha o telefone de contato')
       }
 
-      // Validar que todos os itens da tabela de avarias tenham tipo selecionado
-      // Nota: "OK" é um tipo válido, então todos os itens devem ter um tipo (pode ser "OK" ou um tipo de avaria)
-      const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
-      const itensSemTipo = todosItens.filter(item => {
-        const avaria = avarias[item]
-        // Verifica se não tem avaria ou se o tipo está vazio/null
-        // "OK" é válido, então só rejeita se não tiver tipo ou estiver vazio
-        return !avaria || !avaria.tipo || avaria.tipo.trim() === ''
-      })
-      
-      if (itensSemTipo.length > 0) {
-        throw new Error('Por favor, selecione o tipo de avaria para todos os itens da tabela de avarias')
-      }
+      // Validação da tabela de avarias já foi feita acima via HTML5
+      // Não precisa validar novamente aqui
       
       // Se estiver editando, verificar se o registro está finalizado
       if (editRecord) {
