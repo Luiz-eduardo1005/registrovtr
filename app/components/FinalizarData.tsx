@@ -263,8 +263,8 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
           <table className="records-table">
             <thead>
               <tr>
-                <th>Prefixo</th>
                 <th>Modelo</th>
+                <th>Prefixo</th>
                 <th>Data</th>
                 <th>Status</th>
               </tr>
@@ -288,12 +288,12 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                   >
                     <td>
                       <span style={{ fontWeight: '600', fontSize: '1rem' }}>
-                        {record.codigo_viatura}
+                        {formatarModelo(record.prefixed)}
                       </span>
                     </td>
                     <td>
                       <span style={{ fontWeight: '600', fontSize: '1rem' }}>
-                        {formatarModelo(record.prefixed)}
+                        {record.codigo_viatura}
                       </span>
                     </td>
                     <td>
