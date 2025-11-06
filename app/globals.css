@@ -529,8 +529,8 @@ a {
   }
 
   /* Em mobile, manter apenas colunas essenciais: Modelo, Prefixo, Data, Motorista */
-  .records-table th:nth-child(6),
-  .records-table td:nth-child(6) {
+  .records-table th:nth-child(5),
+  .records-table td:nth-child(5) {
     display: none;
   }
 

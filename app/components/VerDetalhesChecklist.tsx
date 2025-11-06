@@ -312,6 +312,14 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
             />
           </div>
         </div>
+        {/* Cálculo de KM Rodados */}
+        {record.km_final > 0 && record.km_inicial >= 0 && (
+          <div style={{ marginTop: '15px', padding: '12px', backgroundColor: '#e8f5e9', borderRadius: '6px', border: '2px solid #2c7700' }}>
+            <div style={{ color: '#2c7700', fontSize: '1rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              📊 KM Rodados: <span style={{ fontSize: '1.2rem' }}>{(record.km_final - record.km_inicial).toLocaleString('pt-BR')}</span> km
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Combustível e Abastecimento */}
