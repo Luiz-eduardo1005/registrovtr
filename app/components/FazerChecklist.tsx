@@ -850,16 +850,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               >
                 {loading ? 'Apagando...' : 'Apagar Checklist'}
               </button>
-              {onCancel && (
-                <button
-                  type="button"
-                  className="nav-button"
-                  onClick={onCancel}
-                  style={{ padding: '8px 16px', fontSize: '0.9rem', background: '#666' }}
-                >
-                  Cancelar
-                </button>
-              )}
             </>
           ) : (
             <button type="submit" className="submit-button" disabled={loading || dataFinalizada}>
