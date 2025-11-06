@@ -305,55 +305,56 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     return ''
   }
 
-  // Calcular progresso do formulário - versão incremental campo por campo
+  // Calcular progresso do formulário - considera TODOS os campos obrigatórios desde o início
   const calcularProgresso = (): number => {
-    // Primeiro, determinar o total de campos obrigatórios baseado no estado atual
+    // Total fixo de campos obrigatórios (considera o máximo possível)
+    // Campos básicos sempre presentes: Data, Prefixo, Código Viatura, Serviço, Turno = 5 campos
+    // Se serviço for Ordinário: +1 campo (Tipo Turno) = 6 campos básicos
+    // Se serviço for SEG: 5 campos básicos
+    // Campos condicionais sempre presentes quando turno está selecionado: KM Inicial, Combustível Inicial, Nome, CI, OPM, Telefone = 6 campos
+    
+    // Calcular total máximo de campos obrigatórios
+    // Assumimos o cenário mais completo: Ordinário (6 básicos) + 6 condicionais = 12 campos
+    // Mas ajustamos dinamicamente baseado no serviço selecionado
     let totalCampos = 0
+    
+    if (servico === 'Ordinario') {
+      // Ordinário: Data, Prefixo, Código, Serviço, Tipo Turno, Turno = 6 básicos
+      // + 6 condicionais = 12 total
+      totalCampos = 12
+    } else if (servico === 'SEG') {
+      // SEG: Data, Prefixo, Código, Serviço, Turno = 5 básicos
+      // + 6 condicionais = 11 total
+      totalCampos = 11
+    } else {
+      // Ainda não selecionou serviço: assume o máximo (Ordinário = 12 campos)
+      totalCampos = 12
+    }
+    
+    // Contar campos preenchidos
     let camposPreenchidos = 0
     
-    // Sempre conta estes campos básicos (sempre visíveis)
-    totalCampos++ // Data
+    // Campos básicos sempre visíveis
     if (data && data.trim() !== '') camposPreenchidos++
-    
-    totalCampos++ // Prefixo
     if (prefixed && prefixed.trim() !== '') camposPreenchidos++
-    
-    totalCampos++ // Código da Viatura
     if (codigoViatura && codigoViatura.trim() !== '') camposPreenchidos++
-    
-    totalCampos++ // Serviço
     if (servico && servico.trim() !== '') camposPreenchidos++
     
     // Tipo de turno (só conta se serviço for Ordinário)
     if (servico === 'Ordinario') {
-      totalCampos++
       if (tipoTurno && tipoTurno.trim() !== '') camposPreenchidos++
     }
     
-    // Turno (sempre conta)
-    totalCampos++
+    // Turno
     if (turno && turno.trim() !== '') camposPreenchidos++
     
-    // Campos condicionais (só conta se turno estiver selecionado)
-    if (camposHabilitados) {
-      totalCampos++ // KM Inicial
-      if (kmInicial && kmInicial.trim() !== '') camposPreenchidos++
-      
-      totalCampos++ // Combustível Inicial
-      if (combustivelInicial && combustivelInicial.trim() !== '') camposPreenchidos++
-      
-      totalCampos++ // Nome
-      if (nome && nome.trim() !== '') camposPreenchidos++
-      
-      totalCampos++ // CI
-      if (ci && ci.trim() !== '') camposPreenchidos++
-      
-      totalCampos++ // OPM
-      if (opm && opm.trim() !== '') camposPreenchidos++
-      
-      totalCampos++ // Telefone
-      if (telefone && telefone.trim() !== '') camposPreenchidos++
-    }
+    // Campos condicionais (sempre contam no total, mesmo se ainda não apareceram)
+    if (kmInicial && kmInicial.trim() !== '') camposPreenchidos++
+    if (combustivelInicial && combustivelInicial.trim() !== '') camposPreenchidos++
+    if (nome && nome.trim() !== '') camposPreenchidos++
+    if (ci && ci.trim() !== '') camposPreenchidos++
+    if (opm && opm.trim() !== '') camposPreenchidos++
+    if (telefone && telefone.trim() !== '') camposPreenchidos++
     
     if (totalCampos === 0) return 0
     return Math.round((camposPreenchidos / totalCampos) * 100)
