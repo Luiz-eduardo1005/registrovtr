@@ -275,11 +275,16 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                 <th>Prefixo</th>
                 <th>Data</th>
                 <th>Motorista</th>
+                <th>KM Rodados</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {records.map((record) => {
+                const kmRodados = record.km_final > 0 && record.km_inicial >= 0 
+                  ? record.km_final - record.km_inicial 
+                  : null
+                
                 return (
                   <tr 
                     key={record.id} 
@@ -313,6 +318,11 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                     <td>
                       <span style={{ fontSize: '0.95rem' }}>
                         {record.nome || '-'}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '600', color: kmRodados !== null ? '#2c7700' : '#999' }}>
+                        {kmRodados !== null ? `${kmRodados.toLocaleString('pt-BR')} km` : '-'}
                       </span>
                     </td>
                     <td>

@@ -310,52 +310,64 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                 <th>Prefixo</th>
                 <th>Data</th>
                 <th>Motorista</th>
+                <th>KM Rodados</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {records.map((record) => (
-                <tr 
-                  key={record.id}
-                  onClick={() => setSelectedRecord(record)}
-                  style={{ 
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#e3f2fd'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                  }}
-                >
-                  <td>
-                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>
-                      {formatarModelo(record.prefixed)}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ fontWeight: '600', fontSize: '1rem' }}>
-                      {record.codigo_viatura}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
-                      {formatarData(record.data)}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ fontSize: '0.95rem' }}>
-                      {record.nome || '-'}
-                    </span>
-                  </td>
-                  <td>
-                    <span style={{ color: '#2c7700', fontWeight: '600' }}>
-                      Finalizado
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {records.map((record) => {
+                const kmRodados = record.km_final > 0 && record.km_inicial >= 0 
+                  ? record.km_final - record.km_inicial 
+                  : null
+                
+                return (
+                  <tr 
+                    key={record.id}
+                    onClick={() => setSelectedRecord(record)}
+                    style={{ 
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#e3f2fd'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <td>
+                      <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                        {formatarModelo(record.prefixed)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                        {record.codigo_viatura}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+                        {formatarData(record.data)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.95rem' }}>
+                        {record.nome || '-'}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontSize: '0.95rem', fontWeight: '600', color: kmRodados !== null ? '#2c7700' : '#999' }}>
+                        {kmRodados !== null ? `${kmRodados.toLocaleString('pt-BR')} km` : '-'}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ color: '#2c7700', fontWeight: '600' }}>
+                        Finalizado
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>
