@@ -135,7 +135,7 @@ a {
 .radio-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 10px 20px;
   background: white;
   border: 2px solid #ddd;
@@ -154,6 +154,7 @@ a {
   margin: 0;
   cursor: pointer;
   flex-shrink: 0;
+  margin-right: 4px;
 }
 
 .radio-option.selected {
