@@ -160,6 +160,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState<string>('')
   const [dataFinalizada, setDataFinalizada] = useState(false)
 
   // Verificar se o registro está finalizado
@@ -332,6 +333,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       }
 
       setSuccess(true)
+      setSuccessMessage('Checklist salvo com sucesso!')
       
       // Limpar formulário apenas se não estiver editando
       if (!editRecord) {
@@ -355,6 +357,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
       setTimeout(() => {
         setSuccess(false)
+        setSuccessMessage('')
         // Se estiver em modo finalizar, não chamar onSuccess para manter o editRecord
         if (!isFinalizarMode && onSuccess) {
           onSuccess()
@@ -409,9 +412,11 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       if (updateError) throw updateError
 
       setSuccess(true)
+      setSuccessMessage('Checklist finalizado com sucesso!')
       
       setTimeout(() => {
         setSuccess(false)
+        setSuccessMessage('')
         if (onFinalizar) onFinalizar()
         if (onSuccess) onSuccess()
       }, 2000)
@@ -424,6 +429,27 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
 
   return (
     <form onSubmit={handleSubmit}>
+      {/* Mensagem de sucesso no meio da tela */}
+      {success && successMessage && (
+        <div style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          backgroundColor: '#2c7700',
+          color: 'white',
+          padding: '20px 40px',
+          borderRadius: '8px',
+          fontSize: '1.2rem',
+          fontWeight: '600',
+          zIndex: 9999,
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          animation: 'fadeIn 0.3s ease-in'
+        }}>
+          {successMessage}
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h2>{editRecord ? 'Editar Checklist' : 'Fazer Checklist'}</h2>
         {editRecord && onCancel && (
@@ -439,7 +465,6 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       </div>
 
       {error && <div className="error">{error}</div>}
-      {success && <div className="success">{editRecord ? 'Checklist atualizado com sucesso!' : 'Checklist registrado com sucesso!'}</div>}
       {dataFinalizada && (
         <div className="error" style={{ backgroundColor: '#ffebee', color: '#c62828', border: '2px solid #c62828' }}>
           ⚠️ ATENÇÃO: Este checklist foi finalizado e não pode ser editado.

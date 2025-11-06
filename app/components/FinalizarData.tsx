@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import VerDetalhesChecklist from './VerDetalhesChecklist'
 
 const CODIGOS_SPIN = ['1348', '1369', '1399']
 const CODIGOS_S10 = ['1012', '1028']
@@ -70,15 +69,11 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
   const [records, setRecords] = useState<ChecklistRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const [filtroData, setFiltroData] = useState('')
   const [filtroModelo, setFiltroModelo] = useState<'spin' | 's10' | ''>('')
   const [filtroPrefixo, setFiltroPrefixo] = useState('')
   const [filtroTurno, setFiltroTurno] = useState<'Primeiro' | 'Segundo' | ''>('')
   const [filtroServico, setFiltroServico] = useState<'Ordinario' | 'SEG' | ''>('')
-  const [selectedRecord, setSelectedRecord] = useState<ChecklistRecord | null>(null)
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [finalizando, setFinalizando] = useState(false)
 
   // Limpar filtro de prefixo quando o modelo mudar
   useEffect(() => {
@@ -154,8 +149,6 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
       if (fetchError) throw fetchError
 
       setRecords(data || [])
-      // Limpar seleções ao recarregar
-      setSelectedIds(new Set())
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar registros')
     } finally {
@@ -167,78 +160,14 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
     carregarRegistros()
   }, [filtroData, filtroModelo, filtroPrefixo, filtroTurno, filtroServico])
 
-  // Abrir automaticamente se houver apenas um registro após filtrar
-  useEffect(() => {
-    // Verificar se todos os filtros estão preenchidos e há apenas um registro
-    const todosFiltrosPreenchidos = filtroData && filtroModelo && filtroPrefixo && filtroTurno && filtroServico
-    
-    if (todosFiltrosPreenchidos && records.length === 1 && onEdit && !selectedRecord) {
-      // Abrir automaticamente o único registro encontrado
-      onEdit(records[0])
-    }
-  }, [records, filtroData, filtroModelo, filtroPrefixo, filtroTurno, filtroServico, onEdit, selectedRecord])
-
-  const handleToggleSelect = (id: string) => {
-    const newSelectedIds = new Set(selectedIds)
-    if (newSelectedIds.has(id)) {
-      newSelectedIds.delete(id)
-    } else {
-      newSelectedIds.add(id)
-    }
-    setSelectedIds(newSelectedIds)
-  }
-
-  const handleFinalizar = async () => {
-    if (selectedIds.size === 0) {
-      setError('Por favor, selecione pelo menos um registro para finalizar')
-      return
-    }
-
-    setFinalizando(true)
-    setError(null)
-    setSuccess(false)
-
-    try {
-      // Verificar quais registros já estão finalizados
-      const idsParaFinalizar = Array.from(selectedIds)
-      
-      // Atualizar os registros selecionados como finalizados
-      const { error: updateError } = await supabase
-        .from('checklists')
-        .update({ finalizado: true })
-        .in('id', idsParaFinalizar)
-
-      if (updateError) throw updateError
-
-      setSuccess(true)
-      setSelectedIds(new Set())
-      
-      // Recarregar registros
-      await carregarRegistros()
-      
-      setTimeout(() => {
-        setSuccess(false)
-      }, 3000)
-    } catch (err: any) {
-      setError(err.message || 'Erro ao finalizar checklists')
-    } finally {
-      setFinalizando(false)
+  const handleRowClick = (record: ChecklistRecord) => {
+    if (onEdit) {
+      onEdit(record)
     }
   }
 
   if (loading) {
     return <div className="loading">Carregando registros...</div>
-  }
-
-  // Se um registro foi selecionado para edição, abrir automaticamente em modo de edição
-  if (selectedRecord && onEdit) {
-    onEdit(selectedRecord)
-    setSelectedRecord(null) // Limpar após chamar onEdit
-    return null
-  }
-
-  if (selectedRecord) {
-    return <VerDetalhesChecklist record={selectedRecord} onClose={() => setSelectedRecord(null)} onEdit={onEdit} />
   }
 
   return (
@@ -326,24 +255,11 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
       </div>
 
       {error && <div className="error">{error}</div>}
-      {success && <div className="success">Checklists finalizados com sucesso! Não será mais possível editar esses registros.</div>}
 
       {records.length === 0 ? (
         <div className="loading">Nenhum registro pendente encontrado</div>
       ) : (
         <div>
-          <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-            <button
-              type="button"
-              className="submit-button"
-              onClick={handleFinalizar}
-              disabled={finalizando || selectedIds.size === 0}
-              style={{ background: '#d32f2f' }}
-            >
-              {finalizando ? 'Finalizando...' : `Finalizar Checklist${selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}`}
-            </button>
-          </div>
-
           {/* Agrupar registros por prefixo */}
           {(() => {
             const registrosPorPrefixo = records.reduce((acc, record) => {
@@ -369,7 +285,6 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                       <table className="records-table">
                         <thead>
                           <tr>
-                            <th style={{ width: '50px' }}></th>
                             <th>Prefixo</th>
                             <th>Modelo</th>
                             <th>Data</th>
@@ -378,18 +293,21 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                         </thead>
                         <tbody>
                           {registrosDoPrefixo.map((record) => {
-                            const isSelected = selectedIds.has(record.id)
-                            
                             return (
-                              <tr key={record.id} style={{ backgroundColor: isSelected ? '#e3f2fd' : 'transparent' }}>
-                                <td>
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleToggleSelect(record.id)}
-                                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
-                                  />
-                                </td>
+                              <tr 
+                                key={record.id} 
+                                onClick={() => handleRowClick(record)}
+                                style={{ 
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = '#e3f2fd'
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'transparent'
+                                }}
+                              >
                                 <td>
                                   <span style={{ fontWeight: '600', fontSize: '1rem' }}>
                                     {record.codigo_viatura}
@@ -401,16 +319,7 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
                                   </span>
                                 </td>
                                 <td>
-                                  <span
-                                    onClick={() => setSelectedRecord(record)}
-                                    style={{
-                                      cursor: 'pointer',
-                                      color: '#2c7700',
-                                      textDecoration: 'underline',
-                                      fontWeight: '600',
-                                      fontSize: '1.1rem'
-                                    }}
-                                  >
+                                  <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
                                     {formatarData(record.data)}
                                   </span>
                                 </td>

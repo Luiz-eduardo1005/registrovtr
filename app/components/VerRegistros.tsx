@@ -302,11 +302,25 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                 <th>Prefixo</th>
                 <th>Modelo</th>
                 <th>Data</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {records.map((record) => (
-                <tr key={record.id}>
+                <tr 
+                  key={record.id}
+                  onClick={() => setSelectedRecord(record)}
+                  style={{ 
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#e3f2fd'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
+                >
                   <td>
                     <span style={{ fontWeight: '600', fontSize: '1rem' }}>
                       {record.codigo_viatura}
@@ -318,17 +332,13 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                     </span>
                   </td>
                   <td>
-                    <span
-                      onClick={() => setSelectedRecord(record)}
-                      style={{
-                        cursor: 'pointer',
-                        color: '#2c7700',
-                        textDecoration: 'underline',
-                        fontWeight: '600',
-                        fontSize: '1.1rem'
-                      }}
-                    >
+                    <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
                       {formatarData(record.data)}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ color: '#2c7700', fontWeight: '600' }}>
+                      Finalizado
                     </span>
                   </td>
                 </tr>
