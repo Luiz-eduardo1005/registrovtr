@@ -634,28 +634,30 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         <div className="form-group">
           <label>Modelo da Viatura:</label>
           <div className="radio-group">
-            <div className={`radio-option ${prefixed === 'spin' ? 'selected' : ''}`}>
+            <label className={`radio-option ${prefixed === 'spin' ? 'selected' : ''}`} htmlFor="prefixed-spin">
               <input
                 type="radio"
+                id="prefixed-spin"
                 name="prefixed"
                 value="spin"
                 checked={prefixed === 'spin'}
                 onChange={(e) => handlePrefixedChange(e.target.value as 'spin')}
                 required
               />
-              <label>SPIN</label>
-            </div>
-            <div className={`radio-option ${prefixed === 's10' ? 'selected' : ''}`}>
+              <span>SPIN</span>
+            </label>
+            <label className={`radio-option ${prefixed === 's10' ? 'selected' : ''}`} htmlFor="prefixed-s10">
               <input
                 type="radio"
+                id="prefixed-s10"
                 name="prefixed"
                 value="s10"
                 checked={prefixed === 's10'}
                 onChange={(e) => handlePrefixedChange(e.target.value as 's10')}
                 required
               />
-              <label>S10</label>
-            </div>
+              <span>S10</span>
+            </label>
           </div>
         </div>
       </div>
@@ -685,9 +687,10 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         <div className="form-group">
           <label>Serviço:</label>
           <div className="radio-group">
-            <div className={`radio-option ${servico === 'Ordinario' ? 'selected' : ''}`}>
+            <label className={`radio-option ${servico === 'Ordinario' ? 'selected' : ''}`} htmlFor="servico-ordinario">
               <input
                 type="radio"
+                id="servico-ordinario"
                 name="servico"
                 value="Ordinario"
                 checked={servico === 'Ordinario'}
@@ -695,11 +698,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 required
                 disabled={dataFinalizada}
               />
-              <label>Ordinário</label>
-            </div>
-            <div className={`radio-option ${servico === 'SEG' ? 'selected' : ''}`}>
+              <span>Ordinário</span>
+            </label>
+            <label className={`radio-option ${servico === 'SEG' ? 'selected' : ''}`} htmlFor="servico-seg">
               <input
                 type="radio"
+                id="servico-seg"
                 name="servico"
                 value="SEG"
                 checked={servico === 'SEG'}
@@ -707,8 +711,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 required
                 disabled={dataFinalizada}
               />
-              <label>SEG</label>
-            </div>
+              <span>SEG</span>
+            </label>
           </div>
         </div>
       </div>
@@ -719,9 +723,10 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           <div className="form-group">
             <label>Tipo de Turno:</label>
             <div className="radio-group">
-              <div className={`radio-option ${tipoTurno === '12Hs' ? 'selected' : ''}`}>
+              <label className={`radio-option ${tipoTurno === '12Hs' ? 'selected' : ''}`} htmlFor="tipo-turno-12hs">
                 <input
                   type="radio"
+                  id="tipo-turno-12hs"
                   name="tipoTurno"
                   value="12Hs"
                   checked={tipoTurno === '12Hs'}
@@ -729,11 +734,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                   required
                   disabled={dataFinalizada}
                 />
-                <label>12Hs</label>
-              </div>
-              <div className={`radio-option ${tipoTurno === '8Hs (2x2)' ? 'selected' : ''}`}>
+                <span>12Hs</span>
+              </label>
+              <label className={`radio-option ${tipoTurno === '8Hs (2x2)' ? 'selected' : ''}`} htmlFor="tipo-turno-8hs">
                 <input
                   type="radio"
+                  id="tipo-turno-8hs"
                   name="tipoTurno"
                   value="8Hs (2x2)"
                   checked={tipoTurno === '8Hs (2x2)'}
@@ -741,8 +747,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                   required
                   disabled={dataFinalizada}
                 />
-                <label>8Hs (2x2)</label>
-              </div>
+                <span>8Hs (2x2)</span>
+              </label>
             </div>
           </div>
         </div>
@@ -754,9 +760,10 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           <div className="form-group">
             <label>Turno:</label>
             <div className="radio-group">
-              <div className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`}>
+              <label className={`radio-option ${turno === 'Primeiro' ? 'selected' : ''}`} htmlFor="turno-primeiro">
                 <input
                   type="radio"
+                  id="turno-primeiro"
                   name="turno"
                   value="Primeiro"
                   checked={turno === 'Primeiro'}
@@ -764,11 +771,12 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                   required
                   disabled={dataFinalizada}
                 />
-                <label>Primeiro Turno</label>
-              </div>
-              <div className={`radio-option ${turno === 'Segundo' ? 'selected' : ''}`}>
+                <span>Primeiro Turno</span>
+              </label>
+              <label className={`radio-option ${turno === 'Segundo' ? 'selected' : ''}`} htmlFor="turno-segundo">
                 <input
                   type="radio"
+                  id="turno-segundo"
                   name="turno"
                   value="Segundo"
                   checked={turno === 'Segundo'}
@@ -776,8 +784,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                   required
                   disabled={dataFinalizada}
                 />
-                <label>Segundo Turno</label>
-              </div>
+                <span>Segundo Turno</span>
+              </label>
             </div>
           </div>
         </div>
@@ -817,17 +825,18 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             <label>Combustível Inicial:</label>
             <div className="radio-group">
               {OPCOES_COMBUSTIVEL.map((opcao) => (
-                <div key={opcao.value} className={`radio-option ${combustivelInicial === opcao.value ? 'selected' : ''}`}>
+                <label key={opcao.value} className={`radio-option ${combustivelInicial === opcao.value ? 'selected' : ''}`} htmlFor={`combustivel-inicial-${opcao.value}`}>
                   <input
                     type="radio"
+                    id={`combustivel-inicial-${opcao.value}`}
                     name="combustivelInicial"
                     value={opcao.value}
                     checked={combustivelInicial === opcao.value}
                     onChange={(e) => setCombustivelInicial(e.target.value)}
                     required
                   />
-                  <label>{opcao.label}</label>
-                </div>
+                  <span>{opcao.label}</span>
+                </label>
               ))}
             </div>
           </div>
@@ -835,17 +844,17 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             <label>Combustível Final:</label>
             <div className="radio-group">
               {OPCOES_COMBUSTIVEL.map((opcao) => (
-                <div key={opcao.value} className={`radio-option ${combustivelFinal === opcao.value ? 'selected' : ''}`}>
+                <label key={opcao.value} className={`radio-option ${combustivelFinal === opcao.value ? 'selected' : ''}`} htmlFor={`combustivel-final-${opcao.value}`}>
                   <input
                     type="radio"
+                    id={`combustivel-final-${opcao.value}`}
                     name="combustivelFinal"
                     value={opcao.value}
                     checked={combustivelFinal === opcao.value}
                     onChange={(e) => setCombustivelFinal(e.target.value)}
-                  
                   />
-                  <label>{opcao.label}</label>
-                </div>
+                  <span>{opcao.label}</span>
+                </label>
               ))}
             </div>
           </div>
