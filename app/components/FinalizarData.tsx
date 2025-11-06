@@ -57,6 +57,7 @@ interface ChecklistRecord {
   ci: string
   opm: string
   nome: string
+  telefone?: string
   created_at: string
   finalizado?: boolean
 }

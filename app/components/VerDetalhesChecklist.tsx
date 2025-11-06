@@ -55,6 +55,7 @@ interface ChecklistRecord {
   ci: string
   opm: string
   nome: string
+  telefone?: string
   created_at: string
   finalizado?: boolean
 }
@@ -339,7 +340,7 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
         </div>
       </div>
 
-      {/* CI, OPM e Nome */}
+      {/* CI, OPM, Nome e Telefone */}
       <div className="form-section">
         <div className="form-row">
           <div className="form-group">
@@ -365,6 +366,15 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
             <input
               type="text"
               value={record.nome || ''}
+              readOnly
+              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+            />
+          </div>
+          <div className="form-group">
+            <label>Telefone de Contato:</label>
+            <input
+              type="text"
+              value={record.telefone || ''}
               readOnly
               style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
             />
