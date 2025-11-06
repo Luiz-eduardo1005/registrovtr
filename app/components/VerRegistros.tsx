@@ -107,6 +107,8 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
 
   useEffect(() => {
     carregarRegistros()
+    // Limpar registro selecionado quando o componente é montado
+    setSelectedRecord(null)
   }, [])
 
   const carregarRegistros = async () => {

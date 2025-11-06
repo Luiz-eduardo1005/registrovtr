@@ -30,6 +30,7 @@ export default function Home() {
   const [view, setView] = useState<'fazer' | 'finalizar' | 'ver'>('fazer')
   const [editRecord, setEditRecord] = useState<ChecklistRecord | null>(null)
   const [previousView, setPreviousView] = useState<'fazer' | 'finalizar' | 'ver'>('fazer')
+  const [resetVerKey, setResetVerKey] = useState(0)
 
   const handleEdit = (record: ChecklistRecord) => {
     setPreviousView(view)
@@ -80,6 +81,10 @@ export default function Home() {
             onClick={() => {
               setView('ver')
               setEditRecord(null)
+              // Se já estiver na view 'ver', força reset do componente
+              if (view === 'ver') {
+                setResetVerKey(prev => prev + 1)
+              }
             }}
           >
             Ver Registros de Checklists
@@ -100,7 +105,7 @@ export default function Home() {
         />
       )}
       {view === 'finalizar' && <FinalizarData onEdit={handleEdit} />}
-      {view === 'ver' && <VerRegistros />}
+      {view === 'ver' && <VerRegistros key={resetVerKey} />}
     </div>
   )
 }
