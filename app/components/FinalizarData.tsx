@@ -46,7 +46,7 @@ interface ChecklistRecord {
   prefixed: 'spin' | 's10'
   codigo_viatura: string
   servico: 'Ordinario' | 'SEG'
-  turno: 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)'
+  turno: string // Pode ser 'Primeiro', 'Segundo', '12Hs - Primeiro', '12Hs - Segundo', '8Hs (2x2) - Primeiro', '8Hs (2x2) - Segundo'
   km_inicial: number
   km_final: number
   abastecimento: number
@@ -137,10 +137,6 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
         query = query.eq('codigo_viatura', filtroPrefixo)
       }
 
-      if (filtroTurno) {
-        query = query.eq('turno', filtroTurno)
-      }
-
       if (filtroServico) {
         query = query.eq('servico', filtroServico)
       }
@@ -149,7 +145,16 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
 
       if (fetchError) throw fetchError
 
-      setRecords(data || [])
+      // Filtrar por turno no lado do cliente (porque turno pode ser combinado)
+      let registrosFiltrados = data || []
+      
+      if (filtroTurno) {
+        registrosFiltrados = registrosFiltrados.filter(record => 
+          record.turno && record.turno.includes(filtroTurno)
+        )
+      }
+
+      setRecords(registrosFiltrados)
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar registros')
     } finally {

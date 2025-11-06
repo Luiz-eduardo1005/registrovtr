@@ -48,7 +48,7 @@ interface ChecklistRecord {
   prefixed: 'spin' | 's10'
   codigo_viatura: string
   servico: 'Ordinario' | 'SEG'
-  turno: 'Primeiro' | 'Segundo' | '12Hs' | '8Hs (2x2)'
+  turno: string // Pode ser 'Primeiro', 'Segundo', '12Hs - Primeiro', '12Hs - Segundo', '8Hs (2x2) - Primeiro', '8Hs (2x2) - Segundo'
   km_inicial: number
   km_final: number
   abastecimento: number
@@ -154,10 +154,6 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
         query = query.eq('codigo_viatura', filtroPrefixo)
       }
 
-      if (filtroTurno) {
-        query = query.eq('turno', filtroTurno)
-      }
-
       if (filtroServico) {
         query = query.eq('servico', filtroServico)
       }
@@ -166,12 +162,18 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
 
       if (fetchError) throw fetchError
 
-      // Filtrar por avaria no lado do cliente (já que avarias é JSONB)
+      // Filtrar por avaria e turno no lado do cliente (já que avarias é JSONB e turno pode ser combinado)
       let registrosFiltrados = data || []
       
       if (filtroAvaria) {
         registrosFiltrados = registrosFiltrados.filter(record => 
           temAvaria(record, filtroAvaria)
+        )
+      }
+
+      if (filtroTurno) {
+        registrosFiltrados = registrosFiltrados.filter(record => 
+          record.turno && record.turno.includes(filtroTurno)
         )
       }
 
