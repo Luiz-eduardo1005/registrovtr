@@ -76,9 +76,8 @@ export default function TabelaAvarias({
                     onChange={(e) => handleTipoChange(item, e.target.value)}
                     disabled={readOnly}
                     required
-                    title="Por favor, selecione o tipo de avaria"
+                    title="Preencha este campo"
                     onInvalid={(e) => {
-                      e.preventDefault()
                       const target = e.target as HTMLSelectElement
                       target.setCustomValidity('Preencha este campo')
                     }}

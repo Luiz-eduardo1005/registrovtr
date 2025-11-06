@@ -495,12 +495,24 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           htmlField.setCustomValidity('')
         })
         
-        // Validar campos required
-        const requiredFields = form.querySelectorAll('select[required], input[required]')
+        // Validar campos required (EXCETO os da tabela de avarias, que serão validados separadamente)
+        const requiredFields = form.querySelectorAll('select[required]:not(.avarias-table select), input[required]')
+        // Mas como o seletor acima pode não funcionar, vamos filtrar manualmente
+        const allRequiredFields = form.querySelectorAll('select[required], input[required]')
+        const requiredFieldsFiltered: (HTMLSelectElement | HTMLInputElement)[] = []
+        
+        allRequiredFields.forEach((field) => {
+          const selectField = field as HTMLSelectElement | HTMLInputElement
+          // Verificar se não é um select dentro da tabela de avarias
+          const isAvariasSelect = selectField.closest('.avarias-table') !== null
+          if (!isAvariasSelect) {
+            requiredFieldsFiltered.push(selectField)
+          }
+        })
+        
         let primeiroCampoInvalido: HTMLSelectElement | HTMLInputElement | null = null
         
-        requiredFields.forEach((field) => {
-          const selectField = field as HTMLSelectElement | HTMLInputElement
+        requiredFieldsFiltered.forEach((selectField) => {
           if (!selectField.value || selectField.value.trim() === '') {
             if (selectField.tagName === 'SELECT') {
               selectField.setCustomValidity('Por favor, selecione uma opção')
@@ -508,17 +520,25 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               selectField.setCustomValidity('Por favor, preencha este campo')
             }
             if (!primeiroCampoInvalido) {
-              primeiroCampoInvalido = selectField as HTMLSelectElement | HTMLInputElement
+              primeiroCampoInvalido = selectField
             }
           } else {
             selectField.setCustomValidity('')
           }
         })
         
-        // Validar tabela de avarias especificamente
-        const selectsAvarias = form.querySelectorAll('.avarias-table select[required]')
+        // Validar tabela de avarias especificamente (PRIORIDADE)
+        // Buscar os selects da tabela de avarias de forma mais robusta
+        const tabelaAvarias = form.querySelector('.avarias-table') || document.querySelector('.avarias-table')
+        let selectsAvarias: NodeListOf<HTMLSelectElement> = document.querySelectorAll('.avarias-table select[required]')
+        
+        if (tabelaAvarias) {
+          selectsAvarias = tabelaAvarias.querySelectorAll('select[required]')
+        }
+        
         let primeiroSelectAvariasInvalido: HTMLSelectElement | null = null
         
+        // Validar cada select de avarias
         selectsAvarias.forEach((select) => {
           const selectField = select as HTMLSelectElement
           if (!selectField.value || selectField.value.trim() === '') {
@@ -531,29 +551,33 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           }
         })
         
-        // Verificar se o formulário é válido
+        // Se houver selects de avarias vazios, priorizar eles
+        if (primeiroSelectAvariasInvalido) {
+          const campo = primeiroSelectAvariasInvalido as HTMLSelectElement
+          // Scroll suave até o campo primeiro
+          campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          // Depois focar e mostrar mensagem
+          setTimeout(() => {
+            campo.focus()
+            campo.reportValidity()
+          }, 300)
+          return
+        }
+        
+        // Verificar se o formulário é válido (após validar avarias)
         if (!form.checkValidity()) {
-          // Priorizar campos de avarias se houver
-          if (primeiroSelectAvariasInvalido) {
-            const campo = primeiroSelectAvariasInvalido as any
-            // Scroll suave até o campo primeiro
-            campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            // Depois focar e mostrar mensagem
-            setTimeout(() => {
-              campo.focus()
-              campo.reportValidity()
-            }, 300)
-          } else if (primeiroCampoInvalido) {
-            const campo = primeiroCampoInvalido as any
+          if (primeiroCampoInvalido) {
+            const campo = primeiroCampoInvalido as HTMLSelectElement | HTMLInputElement
             campo.scrollIntoView({ behavior: 'smooth', block: 'center' })
             setTimeout(() => {
               campo.focus()
               campo.reportValidity()
             }, 300)
+            return
           } else {
             form.reportValidity()
+            return
           }
-          return
         }
       }
     }
