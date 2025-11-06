@@ -259,86 +259,58 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
       {records.length === 0 ? (
         <div className="loading">Nenhum registro pendente encontrado</div>
       ) : (
-        <div>
-          {/* Agrupar registros por prefixo */}
-          {(() => {
-            const registrosPorPrefixo = records.reduce((acc, record) => {
-              const prefixo = record.codigo_viatura
-              if (!acc[prefixo]) {
-                acc[prefixo] = []
-              }
-              acc[prefixo].push(record)
-              return acc
-            }, {} as Record<string, ChecklistRecord[]>)
-
-            const prefixosOrdenados = Object.keys(registrosPorPrefixo).sort()
-
-            return (
-              <div style={{ overflowX: 'auto' }}>
-                {prefixosOrdenados.map((prefixo) => {
-                  const registrosDoPrefixo = registrosPorPrefixo[prefixo]
-                  return (
-                    <div key={prefixo} style={{ marginBottom: '30px' }}>
-                      <h3 style={{ marginBottom: '10px', color: '#2c7700', fontSize: '1.2rem' }}>
-                        Prefixo: {prefixo}
-                      </h3>
-                      <table className="records-table">
-                        <thead>
-                          <tr>
-                            <th>Prefixo</th>
-                            <th>Modelo</th>
-                            <th>Data</th>
-                            <th>Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {registrosDoPrefixo.map((record) => {
-                            return (
-                              <tr 
-                                key={record.id} 
-                                onClick={() => handleRowClick(record)}
-                                style={{ 
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = '#e3f2fd'
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = 'transparent'
-                                }}
-                              >
-                                <td>
-                                  <span style={{ fontWeight: '600', fontSize: '1rem' }}>
-                                    {record.codigo_viatura}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span style={{ fontWeight: '600', fontSize: '1rem' }}>
-                                    {formatarModelo(record.prefixed)}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
-                                    {formatarData(record.data)}
-                                  </span>
-                                </td>
-                                <td>
-                                  <span style={{ color: '#ff9800', fontWeight: '600' }}>
-                                    ⏳ Pendente
-                                  </span>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )
-                })}
-              </div>
-            )
-          })()}
+        <div style={{ overflowX: 'auto' }}>
+          <table className="records-table">
+            <thead>
+              <tr>
+                <th>Prefixo</th>
+                <th>Modelo</th>
+                <th>Data</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => {
+                return (
+                  <tr 
+                    key={record.id} 
+                    onClick={() => handleRowClick(record)}
+                    style={{ 
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#e3f2fd'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
+                  >
+                    <td>
+                      <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                        {record.codigo_viatura}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: '600', fontSize: '1rem' }}>
+                        {formatarModelo(record.prefixed)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>
+                        {formatarData(record.data)}
+                      </span>
+                    </td>
+                    <td>
+                      <span style={{ color: '#ff9800', fontWeight: '600' }}>
+                        ⏳ Pendente
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
