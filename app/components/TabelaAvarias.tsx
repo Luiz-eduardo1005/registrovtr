@@ -18,25 +18,24 @@ export default function TabelaAvarias({
   const handleTipoChange = (item: string, tipo: string) => {
     const newAvarias = { ...avarias }
     
-    // Sempre deve ter um tipo selecionado (não pode ficar vazio)
-    if (tipo === '' || !tipo) {
-      // Se tentar deixar vazio, mantém como OK
-      newAvarias[item] = {
-        tipo: 'OK',
-        observacao: newAvarias[item]?.observacao || ''
-      }
-    } else if (tipo === 'OK') {
-      // Se selecionar OK, mantém o item mas com tipo OK
-      newAvarias[item] = {
-        tipo: 'OK',
-        observacao: ''
+    // Se selecionar um tipo (incluindo OK), adiciona ou atualiza
+    if (tipo && tipo.trim() !== '') {
+      if (tipo === 'OK') {
+        // Se selecionar OK, mantém o item mas com tipo OK e sem observação
+        newAvarias[item] = {
+          tipo: 'OK',
+          observacao: ''
+        }
+      } else {
+        // Se selecionar um tipo de avaria, adiciona ou atualiza
+        newAvarias[item] = {
+          tipo,
+          observacao: newAvarias[item]?.observacao || ''
+        }
       }
     } else {
-      // Se selecionar um tipo de avaria, adiciona ou atualiza
-      newAvarias[item] = {
-        tipo,
-        observacao: newAvarias[item]?.observacao || ''
-      }
+      // Se tentar deixar vazio, remove o item (não tem tipo selecionado)
+      delete newAvarias[item]
     }
     
     setAvarias(newAvarias)
@@ -73,12 +72,13 @@ export default function TabelaAvarias({
                 <td>{item}</td>
                 <td>
                   <select
-                    value={avariaAtual?.tipo || 'OK'}
+                    value={avariaAtual?.tipo || ''}
                     onChange={(e) => handleTipoChange(item, e.target.value)}
                     disabled={readOnly}
                     required
                     style={readOnly ? { backgroundColor: '#f5f5f5', cursor: 'not-allowed' } : {}}
                   >
+                    <option value="">Selecione...</option>
                     <option value="OK">OK</option>
                     {tiposAvarias.map((tipo) => (
                       <option key={tipo} value={tipo}>

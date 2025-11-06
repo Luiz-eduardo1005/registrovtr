@@ -265,13 +265,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     } else {
       // Quando não está editando, não há registro finalizado
       setDataFinalizada(false)
-      // Inicializar avarias com todos os itens como "OK"
-      const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
-      const avariasIniciais: Record<string, { tipo: string; observacao: string }> = {}
-      todosItens.forEach(item => {
-        avariasIniciais[item] = { tipo: 'OK', observacao: '' }
-      })
-      setAvarias(avariasIniciais)
+      // Inicializar avarias vazias (sem "OK" pré-selecionado)
+      setAvarias({})
     }
     // Não resetar a data quando não há editRecord, para permitir que o usuário selecione a data desejada
   }, [editRecord])
@@ -310,58 +305,55 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     return ''
   }
 
-  // Calcular progresso do formulário - versão corrigida e precisa
+  // Calcular progresso do formulário - versão incremental campo por campo
   const calcularProgresso = (): number => {
-    let camposPreenchidos = 0
+    // Primeiro, determinar o total de campos obrigatórios baseado no estado atual
     let totalCampos = 0
+    let camposPreenchidos = 0
     
-    // Campos básicos sempre visíveis
-    totalCampos++
+    // Sempre conta estes campos básicos (sempre visíveis)
+    totalCampos++ // Data
     if (data && data.trim() !== '') camposPreenchidos++
     
-    totalCampos++
+    totalCampos++ // Prefixo
     if (prefixed && prefixed.trim() !== '') camposPreenchidos++
     
-    totalCampos++
+    totalCampos++ // Código da Viatura
     if (codigoViatura && codigoViatura.trim() !== '') camposPreenchidos++
     
-    totalCampos++
+    totalCampos++ // Serviço
     if (servico && servico.trim() !== '') camposPreenchidos++
     
-    // Tipo de turno (só para Ordinário)
+    // Tipo de turno (só conta se serviço for Ordinário)
     if (servico === 'Ordinario') {
       totalCampos++
       if (tipoTurno && tipoTurno.trim() !== '') camposPreenchidos++
     }
     
-    // Turno
+    // Turno (sempre conta)
     totalCampos++
     if (turno && turno.trim() !== '') camposPreenchidos++
     
-    // Se turno não está selecionado, não conta os campos condicionais ainda
-    if (!camposHabilitados) {
-      if (totalCampos === 0) return 0
-      return Math.round((camposPreenchidos / totalCampos) * 100)
+    // Campos condicionais (só conta se turno estiver selecionado)
+    if (camposHabilitados) {
+      totalCampos++ // KM Inicial
+      if (kmInicial && kmInicial.trim() !== '') camposPreenchidos++
+      
+      totalCampos++ // Combustível Inicial
+      if (combustivelInicial && combustivelInicial.trim() !== '') camposPreenchidos++
+      
+      totalCampos++ // Nome
+      if (nome && nome.trim() !== '') camposPreenchidos++
+      
+      totalCampos++ // CI
+      if (ci && ci.trim() !== '') camposPreenchidos++
+      
+      totalCampos++ // OPM
+      if (opm && opm.trim() !== '') camposPreenchidos++
+      
+      totalCampos++ // Telefone
+      if (telefone && telefone.trim() !== '') camposPreenchidos++
     }
-    
-    // Campos condicionais (só aparecem quando turno está selecionado)
-    totalCampos++
-    if (kmInicial && kmInicial.trim() !== '') camposPreenchidos++
-    
-    totalCampos++
-    if (combustivelInicial && combustivelInicial.trim() !== '') camposPreenchidos++
-    
-    totalCampos++
-    if (nome && nome.trim() !== '') camposPreenchidos++
-    
-    totalCampos++
-    if (ci && ci.trim() !== '') camposPreenchidos++
-    
-    totalCampos++
-    if (opm && opm.trim() !== '') camposPreenchidos++
-    
-    totalCampos++
-    if (telefone && telefone.trim() !== '') camposPreenchidos++
     
     if (totalCampos === 0) return 0
     return Math.round((camposPreenchidos / totalCampos) * 100)
@@ -563,13 +555,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         setAbastecimento('')
         setCombustivelInicial('')
         setCombustivelFinal('')
-        // Reinicializar avarias com todos os itens como "OK"
-        const todosItens = [...ITENS_1_ESCALAO, ...ITENS_PNEUS, ...ITENS_GERAIS]
-        const avariasIniciais: Record<string, { tipo: string; observacao: string }> = {}
-        todosItens.forEach(item => {
-          avariasIniciais[item] = { tipo: 'OK', observacao: '' }
-        })
-        setAvarias(avariasIniciais)
+        // Reinicializar avarias vazias (sem "OK" pré-selecionado)
+        setAvarias({})
         setObservacoes('')
         setCi('')
         setOpm('')
@@ -710,7 +697,8 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             width: '90%',
             boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
             textAlign: 'center',
-            position: 'relative'
+            position: 'relative',
+            border: '3px solid #2c7700'
           }} onClick={(e) => e.stopPropagation()}>
             {/* Brasões */}
             <div style={{
@@ -761,10 +749,11 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             </h2>
             
             <p style={{
-              color: '#555',
+              color: '#2c7700',
               fontSize: '1.1rem',
               lineHeight: '1.6',
-              marginBottom: '10px'
+              marginBottom: '10px',
+              fontWeight: '500'
             }}>
               Os dados foram enviados ao banco de dados do
             </p>
