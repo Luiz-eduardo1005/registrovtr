@@ -427,6 +427,42 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     }
   }
 
+  const handleDeletar = async () => {
+    if (!editRecord) return
+
+    // Confirmar antes de deletar
+    const confirmar = window.confirm('Tem certeza que deseja apagar este checklist? Esta ação não pode ser desfeita.')
+    if (!confirmar) return
+
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('checklists')
+        .delete()
+        .eq('id', editRecord.id)
+
+      if (deleteError) throw deleteError
+
+      setSuccess(true)
+      setSuccessMessage('Checklist apagado com sucesso!')
+      
+      setTimeout(() => {
+        setSuccess(false)
+        setSuccessMessage('')
+        // Voltar para a lista de finalizar checklist
+        if (onFinalizar) onFinalizar()
+        if (onSuccess) onSuccess()
+      }, 2000)
+    } catch (err: any) {
+      setError(err.message || 'Erro ao apagar checklist')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit}>
       {/* Mensagem de sucesso no meio da tela */}
@@ -804,6 +840,15 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 style={{ background: '#d32f2f' }}
               >
                 {loading ? 'Finalizando...' : 'Finalizar Checklist'}
+              </button>
+              <button 
+                type="button" 
+                className="submit-button" 
+                onClick={handleDeletar}
+                disabled={loading || dataFinalizada}
+                style={{ background: '#ff5722' }}
+              >
+                {loading ? 'Apagando...' : 'Apagar Checklist'}
               </button>
               {onCancel && (
                 <button
