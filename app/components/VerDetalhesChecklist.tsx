@@ -339,32 +339,32 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
             <label>Combustível Final:</label>
             <input
               type="text"
-              value={numeroParaOpcao(record.combustivel_final)}
-              readOnly
-              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
-            />
-          </div>
-          <div className="form-group">
-            <label>Abastecimento (L):</label>
-            <input
-              type="number"
-              value={record.abastecimento}
+              value={record.combustivel_final !== undefined && record.combustivel_final !== null ? numeroParaOpcao(record.combustivel_final) : '-'}
               readOnly
               style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
             />
           </div>
         </div>
-        {record.km_abastecimento !== undefined && record.km_abastecimento !== null && record.km_abastecimento > 0 && (
-          <div className="form-group" style={{ marginTop: '15px' }}>
-            <label>KM na Hora do Abastecimento:</label>
+        <div className="form-row" style={{ marginTop: '15px' }}>
+          <div className="form-group">
+            <label>Abastecimento (L):</label>
             <input
               type="number"
-              value={record.km_abastecimento}
+              value={record.abastecimento || 0}
               readOnly
               style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
             />
           </div>
-        )}
+          <div className="form-group">
+            <label>KM na Hora do Abastecimento:</label>
+            <input
+              type="number"
+              value={record.km_abastecimento || 0}
+              readOnly
+              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Tabela de Avarias */}
