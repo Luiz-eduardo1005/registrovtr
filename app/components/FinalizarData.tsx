@@ -182,7 +182,7 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
       <div className="form-section">
         <div className="brazoes-container">
           <div className="brazao-left">
-            <img src="/img/brasao-am.png" alt="Brasão do Estado do Amazonas" className="brazao-img" />
+            <img src="/img/brasao-pmam.png" alt="Brasão da Polícia Militar do Amazonas" className="brazao-img brazao-pmam" />
           </div>
           <div className="brazoes-texto">
             <p className="texto-header">GOVERNO DO ESTADO</p>
@@ -191,7 +191,7 @@ export default function FinalizarChecklist({ onEdit }: FinalizarChecklistProps) 
             <p className="texto-header">1ª COMPANHIA INTERATIVA COMUNITÁRIA</p>
           </div>
           <div className="brazao-right">
-            <img src="/img/brasao-pmam.png" alt="Brasão da Polícia Militar do Amazonas" className="brazao-img brazao-pmam" />
+            <img src="/img/brasao-am.png" alt="Brasão do Estado do Amazonas" className="brazao-img" />
           </div>
         </div>
       </div>
