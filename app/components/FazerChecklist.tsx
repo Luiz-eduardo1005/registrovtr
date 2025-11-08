@@ -791,6 +791,29 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         throw new Error('Este checklist foi finalizado e não pode ser editado.')
       }
 
+      // Validar campos obrigatórios para finalização
+      if (!kmFinal || kmFinal.trim() === '') {
+        throw new Error('Por favor, preencha o KM Final')
+      }
+      if (!combustivelFinal || combustivelFinal.trim() === '') {
+        throw new Error('Por favor, selecione o Combustível Final')
+      }
+      if (!abastecimento || abastecimento.trim() === '') {
+        throw new Error('Por favor, preencha o Abastecimento')
+      }
+      if (!kmAbastecimento || kmAbastecimento.trim() === '') {
+        throw new Error('Por favor, preencha o KM na Hora do Abastecimento')
+      }
+
+      // Validar KM antes de finalizar
+      if (kmInicial && kmFinal) {
+        const inicial = parseInt(kmInicial)
+        const final = parseInt(kmFinal)
+        if (!isNaN(inicial) && !isNaN(final) && final < inicial) {
+          throw new Error('KM Final não pode ser menor que KM Inicial')
+        }
+      }
+
       // Primeiro salvar as alterações
       const checklistData = {
         data: data.trim(),
@@ -1321,12 +1344,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               />
             </div>
             <div className="form-group">
-              <label>KM Final:</label>
+              <label>KM Final: {editRecord && <span className="required-field">*</span>}</label>
               <input
                 type="number"
                 value={kmFinal}
                 onChange={(e) => setKmFinal(e.target.value)}
                 disabled={!editRecord}
+                required={editRecord ? true : false}
                 style={{ 
                   borderColor: kmError ? '#c33' : undefined,
                   backgroundColor: !editRecord ? '#f5f5f5' : undefined,
@@ -1387,7 +1411,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             </div>
           </div>
           <div className="form-group">
-            <label>Combustível Final:</label>
+            <label>Combustível Final: {editRecord && <span className="required-field">*</span>}</label>
             <div className="radio-group" style={{ opacity: !editRecord ? 0.6 : 1, pointerEvents: !editRecord ? 'none' : 'auto' }}>
               {OPCOES_COMBUSTIVEL.map((opcao) => (
                 <label 
@@ -1404,6 +1428,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                     checked={combustivelFinal === opcao.value}
                     onChange={(e) => setCombustivelFinal(e.target.value)}
                     disabled={!editRecord}
+                    required={editRecord ? true : false}
                   />
                   <span>{opcao.label}</span>
                 </label>
@@ -1422,13 +1447,14 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             )}
           </div>
           <div className="form-group">
-            <label>Abastecimento (L):</label>
+            <label>Abastecimento (L): {editRecord && <span className="required-field">*</span>}</label>
             <input
               type="number"
               step="0.01"
               value={abastecimento}
               onChange={(e) => setAbastecimento(e.target.value)}
               disabled={!editRecord}
+              required={editRecord ? true : false}
               style={{ 
                 backgroundColor: !editRecord ? '#f5f5f5' : undefined,
                 cursor: !editRecord ? 'not-allowed' : undefined
@@ -1447,12 +1473,13 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             )}
           </div>
           <div className="form-group">
-            <label>KM na Hora do Abastecimento:</label>
+            <label>KM na Hora do Abastecimento: {editRecord && <span className="required-field">*</span>}</label>
             <input
               type="number"
               value={kmAbastecimento}
               onChange={(e) => setKmAbastecimento(e.target.value)}
               disabled={!editRecord}
+              required={editRecord ? true : false}
               style={{ 
                 backgroundColor: !editRecord ? '#f5f5f5' : undefined,
                 cursor: !editRecord ? 'not-allowed' : undefined
@@ -1678,55 +1705,88 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             <p style={{ marginBottom: '25px', color: '#666', lineHeight: '1.6' }}>
               Tem certeza que deseja finalizar este checklist? Após finalizado, ele não poderá mais ser editado.
             </p>
-            {kmError && (
-              <div style={{ 
-                backgroundColor: '#ffebee', 
-                color: '#c62828', 
-                padding: '12px', 
-                borderRadius: '6px', 
-                marginBottom: '20px',
-                border: '1px solid #c62828'
-              }}>
-                ⚠️ {kmError}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={() => setShowFinalizarModal(false)}
-                style={{
-                  padding: '10px 20px',
-                  border: '2px solid #ddd',
-                  borderRadius: '6px',
-                  background: 'white',
-                  color: '#333',
-                  cursor: 'pointer',
-                  fontWeight: '600'
-                }}
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowFinalizarModal(false)
-                  handleFinalizar()
-                }}
-                disabled={loading || !!kmError}
-                style={{
-                  padding: '10px 20px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  background: kmError ? '#ccc' : '#d32f2f',
-                  color: 'white',
-                  cursor: (loading || kmError) ? 'not-allowed' : 'pointer',
-                  fontWeight: '600',
-                  opacity: (loading || kmError) ? 0.6 : 1
-                }}
-              >
-                {loading ? 'Finalizando...' : 'Sim, Finalizar'}
-              </button>
-            </div>
+            
+            {/* Validar campos obrigatórios */}
+            {(() => {
+              const camposFaltantes: string[] = []
+              if (!kmFinal || kmFinal.trim() === '') camposFaltantes.push('KM Final')
+              if (!combustivelFinal || combustivelFinal.trim() === '') camposFaltantes.push('Combustível Final')
+              if (!abastecimento || abastecimento.trim() === '') camposFaltantes.push('Abastecimento')
+              if (!kmAbastecimento || kmAbastecimento.trim() === '') camposFaltantes.push('KM na Hora do Abastecimento')
+              
+              const temErros = camposFaltantes.length > 0 || !!kmError
+              
+              return (
+                <>
+                  {camposFaltantes.length > 0 && (
+                    <div style={{ 
+                      backgroundColor: '#ffebee', 
+                      color: '#c62828', 
+                      padding: '12px', 
+                      borderRadius: '6px', 
+                      marginBottom: '20px',
+                      border: '1px solid #c62828'
+                    }}>
+                      <strong>⚠️ Campos obrigatórios não preenchidos:</strong>
+                      <ul style={{ margin: '8px 0 0 0', paddingLeft: '20px' }}>
+                        {camposFaltantes.map((campo, index) => (
+                          <li key={index} style={{ marginBottom: '4px' }}>{campo}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {kmError && (
+                    <div style={{ 
+                      backgroundColor: '#ffebee', 
+                      color: '#c62828', 
+                      padding: '12px', 
+                      borderRadius: '6px', 
+                      marginBottom: '20px',
+                      border: '1px solid #c62828'
+                    }}>
+                      ⚠️ {kmError}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowFinalizarModal(false)}
+                      style={{
+                        padding: '10px 20px',
+                        border: '2px solid #ddd',
+                        borderRadius: '6px',
+                        background: 'white',
+                        color: '#333',
+                        cursor: 'pointer',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowFinalizarModal(false)
+                        handleFinalizar()
+                      }}
+                      disabled={loading || temErros}
+                      style={{
+                        padding: '10px 20px',
+                        border: 'none',
+                        borderRadius: '6px',
+                        background: temErros ? '#ccc' : '#d32f2f',
+                        color: 'white',
+                        cursor: (loading || temErros) ? 'not-allowed' : 'pointer',
+                        fontWeight: '600',
+                        opacity: (loading || temErros) ? 0.6 : 1
+                      }}
+                    >
+                      {loading ? 'Finalizando...' : 'Sim, Finalizar'}
+                    </button>
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </div>
       )}
