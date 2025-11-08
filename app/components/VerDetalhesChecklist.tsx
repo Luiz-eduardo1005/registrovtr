@@ -23,10 +23,9 @@ const ITENS_GERAIS = [
   'Limpeza vtr', 'Limp. de pára-brisa d/t', 'Buzina/Sirene/Giroflex',
   'Sistema Comunicação', 'Funilaria/Pint./Adesiv', 'Part Elétrica/Eletrônica',
   'Retrovisores Dir/Erq/Int', 'Faróis/Lanternas/Piscas', 'Ar Condicionado',
-  'Câmeras Internas', 'Monitor da Câmera', 'Impressora/Teclado',
-  'Celular / Carregador', 'Farol de Busca Manual', 'Mecânica',
-  'Maçanetas', 'Estofamento', 'Rodas', 'Tablet SISP',
-  'Máq. Fotográfica'
+  'Câmeras Internas', 'Impressora/Teclado',
+  'Celular / Carregador', 'Mecânica',
+  'Maçanetas', 'Estofamento', 'Rodas'
 ]
 
 // Função para converter número para opção de combustível
