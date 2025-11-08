@@ -121,6 +121,7 @@ interface ChecklistRecord {
   km_inicial: number
   km_final: number
   abastecimento: number
+  km_abastecimento?: number
   combustivel_inicial: number
   combustivel_final: number
   avarias: Record<string, { tipo: string; observacao: string }>
@@ -150,6 +151,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
   const [kmInicial, setKmInicial] = useState('')
   const [kmFinal, setKmFinal] = useState('')
   const [abastecimento, setAbastecimento] = useState('')
+  const [kmAbastecimento, setKmAbastecimento] = useState('')
   const [combustivelInicial, setCombustivelInicial] = useState('')
   const [combustivelFinal, setCombustivelFinal] = useState('')
   const [avarias, setAvarias] = useState<Record<string, { tipo: string; observacao: string }>>({})
@@ -185,6 +187,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       kmInicial,
       kmFinal,
       abastecimento,
+      kmAbastecimento,
       combustivelInicial,
       combustivelFinal,
       avarias,
@@ -219,6 +222,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         setKmInicial(rascunho.kmInicial || '')
         setKmFinal(rascunho.kmFinal || '')
         setAbastecimento(rascunho.abastecimento || '')
+        setKmAbastecimento(rascunho.kmAbastecimento || '')
         setCombustivelInicial(rascunho.combustivelInicial || '')
         setCombustivelFinal(rascunho.combustivelFinal || '')
         setAvarias(rascunho.avarias || {})
@@ -318,6 +322,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
       setKmInicial(editRecord.km_inicial.toString())
       setKmFinal(editRecord.km_final.toString())
       setAbastecimento(editRecord.abastecimento.toString())
+      setKmAbastecimento(editRecord.km_abastecimento?.toString() || '')
       setCombustivelInicial(numeroParaOpcao(editRecord.combustivel_inicial))
       setCombustivelFinal(numeroParaOpcao(editRecord.combustivel_final))
       
@@ -364,7 +369,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
     }
   }, [
     data, prefixed, codigoViatura, servico, tipoTurno, turno,
-    kmInicial, kmFinal, abastecimento, combustivelInicial, combustivelFinal,
+    kmInicial, kmFinal, abastecimento, kmAbastecimento, combustivelInicial, combustivelFinal,
     avarias, observacoes, ci, opm, nome, telefone, editRecord
   ])
 
@@ -634,6 +639,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         km_inicial: parseInt(kmInicial) || 0,
         km_final: parseInt(kmFinal) || 0,
         abastecimento: parseFloat(abastecimento) || 0,
+        km_abastecimento: parseInt(kmAbastecimento) || 0,
         combustivel_inicial: opcaoParaNumero(combustivelInicial),
         combustivel_final: opcaoParaNumero(combustivelFinal),
         avarias: avarias,
@@ -694,6 +700,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
             setKmInicial(registroAtualizado.km_inicial.toString())
             setKmFinal(registroAtualizado.km_final.toString())
             setAbastecimento(registroAtualizado.abastecimento.toString())
+            setKmAbastecimento(registroAtualizado.km_abastecimento?.toString() || '')
             setCombustivelInicial(numeroParaOpcao(registroAtualizado.combustivel_inicial))
             setCombustivelFinal(numeroParaOpcao(registroAtualizado.combustivel_final))
             
@@ -749,6 +756,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         setKmInicial('')
         setKmFinal('')
         setAbastecimento('')
+        setKmAbastecimento('')
         setCombustivelInicial('')
         setCombustivelFinal('')
         // Reinicializar avarias vazias (sem "OK" pré-selecionado)
@@ -794,6 +802,7 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
         km_inicial: parseInt(kmInicial) || 0,
         km_final: parseInt(kmFinal) || 0,
         abastecimento: parseFloat(abastecimento) || 0,
+        km_abastecimento: parseInt(kmAbastecimento) || 0,
         combustivel_inicial: opcaoParaNumero(combustivelInicial),
         combustivel_final: opcaoParaNumero(combustivelFinal),
         avarias: avarias,
@@ -915,20 +924,20 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                   marginBottom: '25px'
                 }}>
                   <img 
-                    src="/img/brasao-pmam.png" 
-                    alt="Brasão da PMAM" 
-                    style={{
-                      maxWidth: '140px',
-                      maxHeight: '140px',
-                      objectFit: 'contain'
-                    }}
-                  />
-                  <img 
                     src="/img/brasao-am.png" 
                     alt="Brasão do Estado do Amazonas" 
                     style={{
                       maxWidth: '120px',
                       maxHeight: '120px',
+                      objectFit: 'contain'
+                    }}
+                  />
+                  <img 
+                    src="/img/brasao-pmam.png" 
+                    alt="Brasão da PMAM" 
+                    style={{
+                      maxWidth: '140px',
+                      maxHeight: '140px',
                       objectFit: 'contain'
                     }}
                   />
@@ -1318,12 +1327,28 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                 type="number"
                 value={kmFinal}
                 onChange={(e) => setKmFinal(e.target.value)}
-                style={{ borderColor: kmError ? '#c33' : undefined }}
+                disabled={!editRecord}
+                style={{ 
+                  borderColor: kmError ? '#c33' : undefined,
+                  backgroundColor: !editRecord ? '#f5f5f5' : undefined,
+                  cursor: !editRecord ? 'not-allowed' : undefined
+                }}
               />
+              {!editRecord && (
+                <small style={{ 
+                  display: 'block', 
+                  marginTop: '4px', 
+                  color: '#666', 
+                  fontStyle: 'italic',
+                  fontSize: '0.85rem'
+                }}>
+                  ⓘ Este campo só pode ser preenchido na aba de Finalizar Checklist
+                </small>
+              )}
             </div>
           </div>
           {/* Cálculo de KM Rodados */}
-          {(kmRodados !== null || kmError) && (
+          {(kmRodados !== null || kmError) && editRecord && (
             <div style={{ marginTop: '15px', padding: '12px', backgroundColor: kmError ? '#ffebee' : '#e8f5e9', borderRadius: '6px', border: `2px solid ${kmError ? '#c33' : '#2c7700'}` }}>
               {kmError ? (
                 <div style={{ color: '#c33', fontSize: '0.95rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1364,9 +1389,14 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
           </div>
           <div className="form-group">
             <label>Combustível Final:</label>
-            <div className="radio-group">
+            <div className="radio-group" style={{ opacity: !editRecord ? 0.6 : 1, pointerEvents: !editRecord ? 'none' : 'auto' }}>
               {OPCOES_COMBUSTIVEL.map((opcao) => (
-                <label key={opcao.value} className={`radio-option ${combustivelFinal === opcao.value ? 'selected' : ''}`} htmlFor={`combustivel-final-${opcao.value}`}>
+                <label 
+                  key={opcao.value} 
+                  className={`radio-option ${combustivelFinal === opcao.value ? 'selected' : ''} ${!editRecord ? 'disabled' : ''}`} 
+                  htmlFor={`combustivel-final-${opcao.value}`}
+                  style={{ cursor: !editRecord ? 'not-allowed' : 'pointer' }}
+                >
                   <input
                     type="radio"
                     id={`combustivel-final-${opcao.value}`}
@@ -1374,11 +1404,23 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
                     value={opcao.value}
                     checked={combustivelFinal === opcao.value}
                     onChange={(e) => setCombustivelFinal(e.target.value)}
+                    disabled={!editRecord}
                   />
                   <span>{opcao.label}</span>
                 </label>
               ))}
             </div>
+            {!editRecord && (
+              <small style={{ 
+                display: 'block', 
+                marginTop: '4px', 
+                color: '#666', 
+                fontStyle: 'italic',
+                fontSize: '0.85rem'
+              }}>
+                ⓘ Este campo só pode ser preenchido na aba de Finalizar Checklist
+              </small>
+            )}
           </div>
           <div className="form-group">
             <label>Abastecimento (L):</label>
@@ -1387,8 +1429,47 @@ export default function FazerChecklist({ editRecord, onCancel, onSuccess, isFina
               step="0.01"
               value={abastecimento}
               onChange={(e) => setAbastecimento(e.target.value)}
-              
+              disabled={!editRecord}
+              style={{ 
+                backgroundColor: !editRecord ? '#f5f5f5' : undefined,
+                cursor: !editRecord ? 'not-allowed' : undefined
+              }}
             />
+            {!editRecord && (
+              <small style={{ 
+                display: 'block', 
+                marginTop: '4px', 
+                color: '#666', 
+                fontStyle: 'italic',
+                fontSize: '0.85rem'
+              }}>
+                ⓘ Este campo só pode ser preenchido na aba de Finalizar Checklist
+              </small>
+            )}
+          </div>
+          <div className="form-group">
+            <label>KM na Hora do Abastecimento:</label>
+            <input
+              type="number"
+              value={kmAbastecimento}
+              onChange={(e) => setKmAbastecimento(e.target.value)}
+              disabled={!editRecord}
+              style={{ 
+                backgroundColor: !editRecord ? '#f5f5f5' : undefined,
+                cursor: !editRecord ? 'not-allowed' : undefined
+              }}
+            />
+            {!editRecord && (
+              <small style={{ 
+                display: 'block', 
+                marginTop: '4px', 
+                color: '#666', 
+                fontStyle: 'italic',
+                fontSize: '0.85rem'
+              }}>
+                ⓘ Este campo só pode ser preenchido na aba de Finalizar Checklist
+              </small>
+            )}
           </div>
         </div>
       )}

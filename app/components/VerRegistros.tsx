@@ -52,6 +52,7 @@ interface ChecklistRecord {
   km_inicial: number
   km_final: number
   abastecimento: number
+  km_abastecimento?: number
   combustivel_inicial: number
   combustivel_final: number
   avarias: Record<string, { tipo: string; observacao: string }>

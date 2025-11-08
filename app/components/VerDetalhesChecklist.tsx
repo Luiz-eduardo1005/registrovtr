@@ -48,6 +48,7 @@ interface ChecklistRecord {
   km_inicial: number
   km_final: number
   abastecimento: number
+  km_abastecimento?: number
   combustivel_inicial: number
   combustivel_final: number
   avarias: Record<string, { tipo: string; observacao: string }>
@@ -354,6 +355,17 @@ export default function VerDetalhesChecklist({ record, onClose, onEdit }: VerDet
             />
           </div>
         </div>
+        {record.km_abastecimento !== undefined && record.km_abastecimento !== null && record.km_abastecimento > 0 && (
+          <div className="form-group" style={{ marginTop: '15px' }}>
+            <label>KM na Hora do Abastecimento:</label>
+            <input
+              type="number"
+              value={record.km_abastecimento}
+              readOnly
+              style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Tabela de Avarias */}
