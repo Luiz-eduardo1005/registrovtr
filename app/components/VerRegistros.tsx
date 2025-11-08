@@ -70,6 +70,15 @@ const formatarModelo = (prefixed: 'spin' | 's10'): string => {
   return prefixed === 'spin' ? 'SPIN' : 'S10'
 }
 
+// Função para converter número para opção de combustível
+const numeroParaOpcao = (numero: number): string => {
+  if (numero === 0) return 'E (Reserva)'
+  if (numero <= 25) return '1/4'
+  if (numero <= 50) return '1/2'
+  if (numero <= 75) return '3/4'
+  return 'F (Cheio)'
+}
+
 // Função para verificar se um registro tem uma avaria específica
 const temAvaria = (record: ChecklistRecord, tipoAvaria: string): boolean => {
   if (!record.avarias || !tipoAvaria) return false
@@ -311,6 +320,10 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                 <th>Prefixo</th>
                 <th>Data</th>
                 <th>Motorista</th>
+                <th>KM Final</th>
+                <th>Combustível Final</th>
+                <th>Abastecimento (L)</th>
+                <th>KM Abastecimento</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -348,6 +361,26 @@ export default function VerRegistros({ onEdit }: VerRegistrosProps) {
                   <td>
                     <span style={{ fontSize: '0.95rem' }}>
                       {record.nome || '-'}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.95rem' }}>
+                      {record.km_final > 0 ? record.km_final.toLocaleString('pt-BR') : '-'}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.95rem' }}>
+                      {record.combustivel_final !== undefined && record.combustivel_final !== null ? numeroParaOpcao(record.combustivel_final) : '-'}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.95rem' }}>
+                      {record.abastecimento > 0 ? record.abastecimento.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.95rem' }}>
+                      {record.km_abastecimento && record.km_abastecimento > 0 ? record.km_abastecimento.toLocaleString('pt-BR') : '-'}
                     </span>
                   </td>
                   <td>
